@@ -1,0 +1,47 @@
+# Laravel Default
+/.phpunit.cache
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+
+# IDE - PHPStorm / VSCode
+/.fleet
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+
+# OS Specific
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Proyek CBT TOEFL Specific
+/storage/app/audio/*
+!/storage/app/audio/.gitkeep
+/storage/app/ekspor/*
+!/storage/app/ekspor/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Development tools
+.phpunit.cache
+.php-cs-fixer.cache
+.phpcs-cache
+
+# Deployment
+/deploy.sh
+/deploy.bat

@@ -1,0 +1,55 @@
+# Konfigurasi Line Endings untuk Cross-Platform (Linux + Windows)
+# Dibuat untuk proyek CBT TOEFL - SMA Al-Ma'soem
+
+# Default: Semua file text gunakan LF (Unix-style)
+* text=auto eol=lf
+
+# File PHP, Blade, JS, CSS - paksa LF
+*.php text eol=lf
+*.blade.php text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+
+# Config files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.xml text eol=lf
+.env* text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Shell scripts - wajib LF (biar jalan di Linux)
+*.sh text eol=lf
+
+# Batch files - boleh CRLF (khusus Windows)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Markdown & Documentation
+*.md text eol=lf
+*.txt text eol=lf
+
+# Binary files - jangan di-convert
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Laravel specific
+composer.lock -diff
+package-lock.json -diff
+
+# Export linguist untuk statistik GitHub
+*.blade.php linguist-language=Blade
+resources/views/** linguist-vendored=false
