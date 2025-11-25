@@ -9,23 +9,23 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Jalankan migration untuk tabel users (tabel induk autentikasi)
+     * Menjalankan migration untuk membuat tabel users (tabel utama autentikasi)
      */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('username', 50)->unique()->comment('Username untuk login');
-            $table->string('email', 100)->unique()->nullable()->comment('Email pengguna (optional)');
-            $table->string('password')->comment('Password ter-hash');
-            $table->enum('role', ['admin', 'guru', 'siswa'])->default('siswa')->comment('Role pengguna dalam sistem');
-            $table->boolean('is_active')->default(true)->comment('Status aktif user');
-            $table->timestamp('last_login_at')->nullable()->comment('Waktu login terakhir');
+            $table->string('email', 100)->unique()->nullable()->comment('Email pengguna (opsional)');
+            $table->string('password')->comment('Password yang sudah di-hash');
+            $table->enum('role', ['admin', 'guru', 'siswa'])->default('siswa')->comment('Peran pengguna dalam sistem');
+            $table->boolean('is_active')->default(true)->comment('Status aktif pengguna');
+            $table->timestamp('last_login_at')->nullable()->comment('Waktu terakhir login');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
 
-            // Index untuk optimasi query
+            // Index untuk meningkatkan performa query
             $table->index('role');
             $table->index('is_active');
             $table->index(['username', 'is_active']);
@@ -33,7 +33,7 @@ return new class extends Migration
     }
 
     /**
-     * Rollback migration
+     * Menghapus tabel users (rollback)
      */
     public function down(): void
     {

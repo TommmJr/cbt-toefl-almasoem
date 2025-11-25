@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Migration untuk tabel cache (Laravel default, diperlukan untuk session & cache driver)
+     * Migration untuk membuat tabel cache (default Laravel, diperlukan untuk session & cache driver)
      */
     public function up(): void
     {
@@ -20,14 +20,14 @@ return new class extends Migration
             $table->integer('expiration');
         });
 
-        // Tabel cache locks
+        // Tabel cache_locks
         Schema::create('cache_locks', function (Blueprint $table) {
             $table->string('key')->primary();
             $table->string('owner');
             $table->integer('expiration');
         });
 
-        // Tabel sessions (untuk menyimpan session di database)
+        // Tabel sessions (menyimpan session ke database)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
@@ -37,7 +37,7 @@ return new class extends Migration
             $table->integer('last_activity')->index();
         });
 
-        // Tabel jobs (untuk queue system - AI grading async)
+        // Tabel jobs (untuk sistem antrian, misalnya pemrosesan AI asynchronous)
         Schema::create('jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
@@ -48,7 +48,7 @@ return new class extends Migration
             $table->unsignedInteger('created_at');
         });
 
-        // Tabel job batches (untuk batch processing)
+        // Tabel job_batches (pemrosesan batch)
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->string('name');
@@ -62,7 +62,7 @@ return new class extends Migration
             $table->integer('finished_at')->nullable();
         });
 
-        // Tabel failed jobs (untuk tracking job yang gagal)
+        // Tabel failed_jobs (mencatat job yang gagal)
         Schema::create('failed_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('uuid')->unique();
@@ -75,7 +75,7 @@ return new class extends Migration
     }
 
     /**
-     * Rollback migration
+     * Menghapus semua tabel terkait (rollback)
      */
     public function down(): void
     {
