@@ -4,73 +4,43 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\StatusUjian;
+use App\Enums\TipeSoal;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Str;
 
-class SesiUjian extends Model
+class UjianSection extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    /**
-     * Nama tabel
-     */
-    protected $table = 'sesi_ujian';
+    protected $table = 'ujian_section';
 
-    /**
-     * Mass assignable attributes
-     */
     protected $fillable = [
         'ujian_id',
-        'siswa_id',
-        'token_akses',
-        'status',
-        'waktu_mulai',
-        'waktu_selesai',
-        'sisa_waktu_detik',
-        'jumlah_tab_switch',
-        'jumlah_peringatan',
-        'catatan_pengawas',
-        'ip_address',
-        'user_agent',
+        'tipe_section',
+        'urutan',
+        'durasi_menit',
+        'jumlah_soal_target',
+        'bobot_nilai',
+        'instruksi_custom',
+        'is_active',
     ];
 
-    /**
-     * Cast attributes
-     */
     protected function casts(): array
     {
         return [
-            'status' => StatusUjian::class,
-            'waktu_mulai' => 'datetime',
-            'waktu_selesai' => 'datetime',
-            'sisa_waktu_detik' => 'integer',
-            'jumlah_tab_switch' => 'integer',
-            'jumlah_peringatan' => 'integer',
+            'tipe_section' => TipeSoal::class,
+            'urutan' => 'integer',
+            'durasi_menit' => 'integer',
+            'jumlah_soal_target' => 'integer',
+            'bobot_nilai' => 'decimal:2',
+            'is_active' => 'boolean',
         ];
     }
 
     /**
-     * Boot method untuk auto-generate token
-     */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($sesiUjian) {
-            if (empty($sesiUjian->token_akses)) {
-                $sesiUjian->token_akses = Str::random(100);
-            }
-        });
-    }
-
-    /**
-     * Relasi ke ujian (many:1)
+     * Relasi ke ujian
      */
     public function ujian(): BelongsTo
     {
@@ -78,118 +48,71 @@ class SesiUjian extends Model
     }
 
     /**
-     * Relasi ke siswa (many:1)
+     * Relasi ke soal-soal dalam section ini
      */
-    public function siswa(): BelongsTo
+    public function soal(): HasMany
     {
-        return $this->belongsTo(Siswa::class);
+        return $this->hasMany(Soal::class)->orderBy('nomor_urut');
     }
 
     /**
-     * Relasi ke jawaban (1:many)
+     * Scope: Urutkan berdasarkan urutan section
      */
-    public function jawaban(): HasMany
+    public function scopeOrdered($query)
     {
-        return $this->hasMany(Jawaban::class);
+        return $query->orderBy('urutan');
     }
 
     /**
-     * Relasi ke nilai (1:1)
-     */
-    public function nilai(): HasOne
-    {
-        return $this->hasOne(Nilai::class);
-    }
-
-    /**
-     * Scope: Filter berdasarkan status
-     */
-    public function scopeByStatus($query, StatusUjian $status)
-    {
-        return $query->where('status', $status->value);
-    }
-
-    /**
-     * Scope: Filter sesi yang sedang aktif
+     * Scope: Section yang aktif
      */
     public function scopeAktif($query)
     {
-        return $query->where('status', StatusUjian::SEDANG_MENGERJAKAN->value);
+        return $query->where('is_active', true);
     }
 
     /**
-     * : Mulai sesi ujian
+     * Helper: Ambil config default dari Enum
      */
-    public function mulaiUjian(): void
+    public function getConfigDefaultAttribute(): array
     {
-        $this->update([
-            'status' => StatusUjian::SEDANG_MENGERJAKAN,
-            'waktu_mulai' => now(),
-            'sisa_waktu_detik' => $this->ujian->durasi_menit * 60,
-        ]);
+        return $this->tipe_section->config();
     }
 
     /**
-     * : Selesaikan sesi ujian
+     * Helper: Ambil label section
      */
-    public function selesaikanUjian(): void
+    public function getLabelAttribute(): string
     {
-        $this->update([
-            'status' => StatusUjian::SELESAI,
-            'waktu_selesai' => now(),
-            'sisa_waktu_detik' => 0,
-        ]);
+        return $this->tipe_section->label();
     }
 
     /**
-     * : Diskualifikasi siswa
+     * Helper: Ambil icon section
      */
-    public function diskualifikasi(string $alasan): void
+    public function getIconAttribute(): string
     {
-        $this->update([
-            'status' => StatusUjian::DISKUALIFIKASI,
-            'waktu_selesai' => now(),
-            'catatan_pengawas' => $alasan,
-        ]);
+        return $this->tipe_section->icon();
     }
 
     /**
-     * : Tambah hitungan tab switch
+     * Helper: Cek apakah jumlah soal sudah sesuai target
      */
-    public function tambahTabSwitch(): void
+    public function isSoalLengkap(): bool
     {
-        $this->increment('jumlah_tab_switch');
-        $this->increment('jumlah_peringatan');
+        return $this->soal()->count() >= $this->jumlah_soal_target;
     }
 
     /**
-     * : Hitung progress pengerjaan (%)
+     * Helper: Hitung progress input soal (%)
      */
-    public function getProgressAttribute(): int
+    public function getProgressSoalAttribute(): int
     {
-        $totalSoal = $this->ujian->soal()->count();
-        
-        if ($totalSoal === 0) {
+        if ($this->jumlah_soal_target === 0) {
             return 0;
         }
 
-        $soalDijawab = $this->jawaban()->count();
-        
-        return (int) (($soalDijawab / $totalSoal) * 100);
-    }
-
-    /**
-     * : Hitung sisa waktu dalam format menit:detik
-     */
-    public function getSisaWaktuFormattedAttribute(): string
-    {
-        if (!$this->sisa_waktu_detik) {
-            return '00:00';
-        }
-
-        $minutes = floor($this->sisa_waktu_detik / 60);
-        $seconds = $this->sisa_waktu_detik % 60;
-
-        return sprintf('%02d:%02d', $minutes, $seconds);
+        $jumlahSoal = $this->soal()->count();
+        return (int) min(100, ($jumlahSoal / $this->jumlah_soal_target) * 100);
     }
 }

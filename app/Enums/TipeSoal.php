@@ -7,8 +7,8 @@ namespace App\Enums;
 enum TipeSoal: string
 {
     case LISTENING = 'listening';
+    case STRUCTURE = 'structure';
     case READING = 'reading';
-    case WRITING = 'writing';
 
     /**
      * Ambil semua nilai enum
@@ -43,11 +43,35 @@ enum TipeSoal: string
     }
 
     /**
-     * Cek apakah soal butuh AI grading
+     * Ambil config section dari config/toefl.php
      */
-    public function needsAIGrading(): bool
+    public function config(): array
     {
-        return $this === self::WRITING;
+        return config("toefl.sections.{$this->value}", []);
+    }
+
+    /**
+     * Ambil durasi section dalam menit
+     */
+    public function durasi(): int
+    {
+        return $this->config()['durasi_menit'] ?? 0;
+    }
+
+    /**
+     * Ambil jumlah soal section
+     */
+    public function jumlahSoal(): int
+    {
+        return $this->config()['jumlah_soal'] ?? 0;
+    }
+
+    /**
+     * Ambil bobot nilai section
+     */
+    public function bobotNilai(): float
+    {
+        return $this->config()['bobot_nilai'] ?? 1.0;
     }
 
     /**

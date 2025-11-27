@@ -9,35 +9,55 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Jalankan migration untuk tabel sesi_ujian
-     * Tracking siswa yang sedang/sudah mengerjakan ujian
+     * Tabel pivot: ujian_section
+     * Menyimpan konfigurasi section per ujian (flexibility tinggi)
      */
     public function up(): void
     {
-        Schema::create('sesi_ujian', function (Blueprint $table) {
+        Schema::create('ujian_section', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ujian_id')->constrained('ujian')->cascadeOnDelete()->comment('FK ke ujian');
-            $table->foreignId('siswa_id')->constrained('siswa')->cascadeOnDelete()->comment('FK ke siswa');
-            $table->string('token_akses', 100)->unique()->comment('Token unik untuk akses ujian');
-            $table->enum('status', ['belum_mulai', 'sedang_mengerjakan', 'selesai', 'diskualifikasi'])->default('belum_mulai')->comment('Status pengerjaan');
-            $table->dateTime('waktu_mulai')->nullable()->comment('Waktu siswa mulai mengerjakan');
-            $table->dateTime('waktu_selesai')->nullable()->comment('Waktu siswa submit jawaban');
-            $table->integer('sisa_waktu_detik')->unsigned()->nullable()->comment('Sisa waktu dalam detik (untuk resume)');
-            $table->integer('jumlah_tab_switch')->unsigned()->default(0)->comment('Hitungan ganti tab (untuk monitoring)');
-            $table->integer('jumlah_peringatan')->unsigned()->default(0)->comment('Jumlah peringatan yang diterima');
-            $table->text('catatan_pengawas')->nullable()->comment('Catatan dari admin/guru pengawas');
-            $table->string('ip_address', 45)->nullable()->comment('IP address siswa');
-            $table->text('user_agent')->nullable()->comment('Browser/device info');
+            
+            // Tipe section (tetap pakai Enum untuk type-safe)
+            $table->enum('tipe_section', ['listening', 'structure', 'reading'])->comment('Tipe section TOEFL');
+            
+            // Urutan section dalam ujian (bisa di-custom)
+            $table->integer('urutan')->unsigned()->comment('Urutan pengerjaan (1, 2, 3)');
+            
+            // Konfigurasi per section (OVERRIDE dari config default)
+            $table->integer('durasi_menit')->unsigned()->comment('Durasi section ini (bisa beda dari default)');
+            $table->integer('jumlah_soal_target')->unsigned()->comment('Target jumlah soal di section ini');
+            $table->decimal('bobot_nilai', 5, 2)->default(1.0)->comment('Bobot nilai section (untuk custom scoring)');
+            
+            // Instruksi custom per section (optional)
+            $table->text('instruksi_custom')->nullable()->comment('Instruksi tambahan untuk section ini');
+            
+            // Status
+            $table->boolean('is_active')->default(true)->comment('Section aktif atau tidak');
+            
             $table->timestamps();
-            $table->softDeletes();
 
-            // Unique constraint: Satu siswa hanya bisa punya 1 sesi per ujian
-            $table->unique(['ujian_id', 'siswa_id']);
+            // Unique constraint: Satu ujian tidak bisa punya section yang sama 2x
+            $table->unique(['ujian_id', 'tipe_section']);
+            
+            // Unique constraint: Urutan tidak boleh duplicate dalam 1 ujian
+            $table->unique(['ujian_id', 'urutan']);
+            
+            // Index
+            $table->index(['ujian_id', 'urutan', 'is_active']);
+        });
 
-            // Index untuk monitoring real-time
-            $table->index(['ujian_id', 'status']);
-            $table->index('token_akses');
-            $table->index(['status', 'waktu_mulai']);
+        // Update tabel soal: tambah FK ke ujian_section
+        Schema::table('soal', function (Blueprint $table) {
+            $table->foreignId('ujian_section_id')
+                ->nullable()
+                ->after('ujian_id')
+                ->constrained('ujian_section')
+                ->cascadeOnDelete()
+                ->comment('FK ke ujian_section (menggantikan tipe_soal)');
+            
+            // Index untuk query soal per section
+            $table->index(['ujian_section_id', 'nomor_urut']);
         });
     }
 
@@ -46,6 +66,11 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sesi_ujian');
+        Schema::table('soal', function (Blueprint $table) {
+            $table->dropForeign(['ujian_section_id']);
+            $table->dropColumn('ujian_section_id');
+        });
+        
+        Schema::dropIfExists('ujian_section');
     }
 };
