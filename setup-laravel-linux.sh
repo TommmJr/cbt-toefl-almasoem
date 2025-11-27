@@ -1,9 +1,9 @@
 #!/bin/bash
-# Setup Laravel 11 - CBT TOEFL (Linux/Mac - untuk Tommm)
+# Setup Laravel 11 - CBT TOEFL (Linux/Mac)
 
-echo "🚀 Memulai setup Laravel 11 CBT TOEFL..."
+echo " Memulai setup Laravel 11 CBT TOEFL..."
 
-# 1. Install dependencies tambahan (Skip create-project karena lo udah bikin)
+# 1. Install dependencies tambahan 
 composer require livewire/livewire
 composer require maatwebsite/excel
 composer require spatie/laravel-permission
@@ -29,8 +29,8 @@ touch routes/admin.php
 touch routes/guru.php
 touch routes/siswa.php
 
-# 6. Setup permissions (PENTING BUAT LINUX)
+# 6. Setup permissions
 chmod -R 775 storage bootstrap/cache
 chmod +x artisan
 
-echo "✅ Setup dasar selesai!"
+echo " Setup dasar selesai!"
