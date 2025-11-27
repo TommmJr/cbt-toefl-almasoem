@@ -169,4 +169,36 @@ class Ujian extends Model
         
         return explode(',', $this->target_kelas);
     }
+
+    /**
+ * Relasi ke ujian sections (1:many)
+ */
+public function sections(): HasMany
+{
+    return $this->hasMany(UjianSection::class)->orderBy('urutan');
+}
+
+/**
+ * Relasi ke token ujian (1:many)
+ */
+public function tokens(): HasMany
+{
+    return $this->hasMany(TokenUjian::class);
+}
+
+/**
+ * Helper: Generate token untuk ujian ini
+ */
+public function generateToken(User $pembuatToken, int $kuota = 3000): TokenUjian
+{
+    return TokenUjian::create([
+        'ujian_id' => $this->id,
+        'kode_token' => TokenUjian::generateKodeToken(),
+        'kuota_pemakaian' => $kuota,
+        'berlaku_dari' => $this->waktu_mulai->subHour(), // 1 jam sebelum ujian
+        'berlaku_sampai' => $this->waktu_selesai,
+        'dibuat_oleh' => $pembuatToken->id,
+        'ip_address' => request()->ip(),
+    ]);
+}
 }

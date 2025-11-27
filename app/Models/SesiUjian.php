@@ -10,12 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class UjianSection extends Model
+class SesiUjian extends Model
 {
     use HasFactory;
 
-    protected $table = 'ujian_section';
-
+    protected $table = 'sesi_ujians';
+    
+    protected $guarded = ['id'];
+    
     protected $fillable = [
         'ujian_id',
         'tipe_section',
@@ -25,6 +27,10 @@ class UjianSection extends Model
         'bobot_nilai',
         'instruksi_custom',
         'is_active',
+        'siswa_id',
+        'status',
+        'ip_address',
+        'user_agent',
     ];
 
     protected function casts(): array
@@ -42,6 +48,12 @@ class UjianSection extends Model
     /**
      * Relasi ke ujian
      */
+
+    public function siswa(): BelongsTo
+    {
+        return $this->belongsTo(Siswa::class);
+    }
+
     public function ujian(): BelongsTo
     {
         return $this->belongsTo(Ujian::class);

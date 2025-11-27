@@ -47,9 +47,12 @@ return new class extends Migration
         // Tabel pivot: tracking siapa aja yang udah pakai token ini
         Schema::create('token_ujian_usage', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('token_ujian_id')->constrained('token_ujian')->cascadeOnDelete();
+            
+            // Relasi ke tabel token_ujian (yang dibuat di atas)
+            $table->foreignId('token_ujian_id')->constrained('token_ujian')->cascadeOnDelete();          
             $table->foreignId('siswa_id')->constrained('siswa')->cascadeOnDelete();
-            $table->foreignId('sesi_ujian_id')->nullable()->constrained('sesi_ujian')->nullOnDelete()->comment('Link ke sesi ujian yang dibuat');
+            $table->foreignId('sesi_ujian_id')->nullable()->constrained('sesi_ujians')->nullOnDelete()->comment('Link ke sesi ujian yang dibuat');
+            
             $table->string('ip_address', 45)->comment('IP siswa saat pakai token');
             $table->text('user_agent')->nullable()->comment('Browser info');
             $table->timestamp('digunakan_pada')->useCurrent()->comment('Timestamp pakai token');

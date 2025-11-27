@@ -10,22 +10,26 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * Mass assignable attributes
      */
-    protected $fillable = [
-        'username',
+     protected $fillable = [
+        'username', 
+        'name',
         'email',
         'password',
         'role',
         'is_active',
         'last_login_at',
     ];
+
 
     /**
      * Hidden attributes (tidak masuk JSON response)
@@ -41,7 +45,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'role' => RolePengguna::class,
+            'role' => RolePengguna::class, // Pastikan file Enum ada!
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'email_verified_at' => 'datetime',

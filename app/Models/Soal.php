@@ -159,4 +159,21 @@ class Soal extends Model
             default => 'Sulit',
         };
     }
+
+    /**
+ * Relasi ke ujian section (many:1)
+ */
+public function ujianSection(): BelongsTo
+{
+    return $this->belongsTo(UjianSection::class);
+}
+
+/**
+ * Helper: Ambil tipe soal dari section (backward compatibility)
+ */
+public function getTipeSoalAttribute(): TipeSoal
+{
+    return $this->ujianSection->tipe_section;
+}
+
 }

@@ -16,7 +16,7 @@ return new class extends Migration
     {
         Schema::create('nilai', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sesi_ujian_id')->constrained('sesi_ujian')->cascadeOnDelete()->comment('FK ke sesi ujian');
+            $table->foreignId('sesi_ujian_id')->constrained('sesi_ujians')->cascadeOnDelete()->comment('FK ke sesi ujian');
             $table->foreignId('siswa_id')->constrained('siswa')->cascadeOnDelete()->comment('FK ke siswa');
             $table->foreignId('ujian_id')->constrained('ujian')->cascadeOnDelete()->comment('FK ke ujian');
             

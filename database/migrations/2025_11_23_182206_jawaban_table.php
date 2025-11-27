@@ -16,9 +16,13 @@ return new class extends Migration
     {
         Schema::create('jawaban', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('sesi_ujian_id')->constrained('sesi_ujian')->cascadeOnDelete()->comment('FK ke sesi ujian');
-            $table->foreignId('soal_id')->constrained('soal')->cascadeOnDelete()->comment('FK ke soal');
             
+            // FK ke sesi_ujians (Plural/Jamak karena tabelnya sesi_ujians)
+            $table->foreignId('sesi_ujian_id')->constrained('sesi_ujians')->cascadeOnDelete()->comment('FK ke sesi ujian');            
+            
+            // FK ke soal (Singular/Tunggal karena tabelnya soal)
+            $table->foreignId('soal_id')->constrained('soal')->cascadeOnDelete()->comment('FK ke soal'); 
+
             // Jawaban pilihan ganda (A/B/C/D)
             $table->string('jawaban_pilihan', 5)->nullable()->comment('Jawaban pilihan ganda');
             
@@ -47,7 +51,7 @@ return new class extends Migration
             $table->index(['sesi_ujian_id', 'is_benar']);
             $table->index(['soal_id', 'is_benar']);
         });
-    }
+    } 
 
     /**
      * Rollback migration
