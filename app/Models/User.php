@@ -18,7 +18,7 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
-     * Mass assignable attributes
+     * 
      */
      protected $fillable = [
         'username', 

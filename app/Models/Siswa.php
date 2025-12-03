@@ -15,12 +15,12 @@ class Siswa extends Model
     use HasFactory, SoftDeletes;
 
     /**
-     * Nama tabel (karena bukan bentuk jamak default Laravel)
+     * Nama tabel 
      */
     protected $table = 'siswa';
 
     /**
-     * Mass assignable attributes
+     *
      */
     protected $fillable = [
         'user_id',

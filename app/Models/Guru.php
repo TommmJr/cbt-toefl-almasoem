@@ -20,7 +20,7 @@ class Guru extends Model
     protected $table = 'guru';
 
     /**
-     * Mass assignable attributes
+     * 
      */
     protected $fillable = [
         'user_id',
