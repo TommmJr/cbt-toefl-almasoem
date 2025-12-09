@@ -1,72 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Http\{RedirectResponse, Request};
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use Illuminate\View\View;
 
 class AuthController extends Controller
 {
     /**
-     * Login API
+     * Tampilkan halaman login
      */
-    public function login(Request $request)
+    public function showLoginForm(): View
     {
-        $request->validate([
+        return view('auth.login');
+    }
+
+    /**
+     * Proses login dengan validasi role
+     */
+    public function login(Request $request): RedirectResponse
+    {
+        $credentials = $request->validate([
             'username' => 'required|string',
             'password' => 'required|string',
+            'role' => 'required|in:siswa,guru,admin',
+        ], [
+            'username.required' => 'Username wajib diisi',
+            'password.required' => 'Password wajib diisi',
+            'role.required' => 'Role wajib dipilih',
         ]);
 
-        $credentials = $request->only('username', 'password');
-
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Username atau password salah.',
-            ], 401);
+        // Coba login dengan email dulu
+        if (Auth::attempt(['email' => $credentials['username'], 'password' => $credentials['password'], 'role' => $credentials['role']])) {
+            $request->session()->regenerate();
+            return $this->redirectToDashboard(Auth::user()->role);
         }
 
-        $user = Auth::user();
+        // Jika gagal, coba dengan username (name field)
+        if (Auth::attempt(['name' => $credentials['username'], 'password' => $credentials['password'], 'role' => $credentials['role']])) {
+            $request->session()->regenerate();
+            return $this->redirectToDashboard(Auth::user()->role);
+        }
 
-        // Hapus token lama (opsional)
-        $user->tokens()->delete();
-
-        // Create Token Baru
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Login berhasil!',
-            'data' => [
-                'user' => $user,
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-            ]
-        ]);
+        return back()
+            ->withErrors(['username' => 'Username, password, atau role tidak sesuai'])
+            ->withInput($request->except('password'));
     }
 
     /**
-     * Logout API
+     * Logout user
      */
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logout berhasil.',
-        ]);
+        return redirect()->route('login')
+            ->with('success', 'Anda berhasil logout');
     }
-    
+
     /**
-     * Cek Profile
+     * Redirect ke dashboard sesuai role
      */
-    public function me(Request $request)
+    private function redirectToDashboard(string $role): RedirectResponse
     {
-        return response()->json([
-            'success' => true,
-            'data' => $request->user(),
-        ]);
+        return match($role) {
+            'siswa' => redirect()->route('siswa.dashboard'),
+            'guru' => redirect()->route('guru.dashboard'),
+            'admin' => redirect()->route('admin.dashboard'),
+            default => redirect()->route('landing'),
+        };
     }
 }
