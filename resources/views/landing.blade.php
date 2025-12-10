@@ -45,7 +45,7 @@
     style="background-image: url('{{ asset('images/sekolahHd.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
 
     <nav class="w-full bg-[#004e92] h-16 flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-40">
-        <div class="text-white font-semibold text-lg">Al Ma’soem TOEFL CBT System</div>
+        <div class="text-white font-semibold text-lg">Al Masoem TOEFL CBT System</div>
         
         {{-- TOMBOL LOGIN: Diarahin ke route login Laravel --}}
         <a href="{{ route('login') }}" class="text-white/80 hover:text-white font-medium transition no-underline">
