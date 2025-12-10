@@ -1,47 +1,78 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Multi Role</title>
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+<body style="background-image: url('{{ asset('images/sekolahHd.jpg') }}'); background-size: cover; background-position: center;">
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+    <nav class="w-full bg-[#004e92] h-16 flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-40">
+        <div class="text-white font-semibold text-lg">Al Ma’soem TOEFL CBT System</div>
+        <a href="{{ route('landing') }}" class="text-white/80 hover:text-white font-medium transition no-underline">
+            Back to Landing Page
+        </a>
+    </nav>  
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+    <section class="flex items-center justify-center min-h-screen pt-16">
+        <div class="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl p-8 w-96 border border-white/40">
+            <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">Login Sistem</h2>
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
+            @if ($errors->any())
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative mb-4 text-sm">
+                    <ul class="list-disc pl-4">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
             @endif
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
+            <form action="{{ route('login.post') }}" method="POST">
+                @csrf <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Pilih Role</label>
+                    <select name="role" class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
+                        <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>User (Siswa)</option>
+                        <option value="guru" {{ old('role') == 'guru' ? 'selected' : '' }}>Guru</option>
+                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-medium mb-2">Username</label>
+                    <input type="text" name="username" placeholder="Masukkan username / NIS"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none" 
+                        value="{{ old('username') }}" required>
+                </div>
+
+                <div class="mb-5">
+                    <label class="block text-gray-700 font-medium mb-2">Password</label>
+                    <input type="password" name="password" placeholder="Masukkan password"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none" required>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl transition shadow-md hover:shadow-lg">
+                    Login
+                </button>
+            </form>
+
+            <p class="text-center text-sm text-gray-500 mt-4">Toefl CBT © 2025</p>
         </div>
-    </form>
-</x-guest-layout>
+    </section>
+
+    <script>lucide.createIcons();</script>
+
+</body>
+</html>
