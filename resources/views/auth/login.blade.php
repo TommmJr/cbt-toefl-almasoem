@@ -40,31 +40,27 @@
                 </div>
             @endif
 
+            {{-- 👉 INI DIA YANG HILANG KEMARIN! --}}
             <form action="{{ route('login.post') }}" method="POST">
-                @csrf <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Pilih Role</label>
-                    <select name="role" class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none">
-                        <option value="siswa" {{ old('role') == 'siswa' ? 'selected' : '' }}>User (Siswa)</option>
-                        <option value="guru" {{ old('role') == 'guru' ? 'selected' : '' }}>Guru</option>
-                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                    </select>
-                </div>
+                @csrf 
+                {{-- 👉 INI JUGA PENTING BIAR GAK ERROR ROLE --}}
+                <input type="hidden" name="role" value="siswa">
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 font-medium mb-2">Username</label>
-                    <input type="text" name="username" placeholder="Masukkan username / NIS"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none" 
-                        value="{{ old('username') }}" required>
+                    <label class="block text-gray-700 font-medium mb-2">Username / NIS</label>
+                    <input type="text" name="username" placeholder="Masukkan NIS (Contoh: 2025001)"
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none transition" 
+                        value="{{ old('username') }}" required autofocus>
                 </div>
 
                 <div class="mb-5">
                     <label class="block text-gray-700 font-medium mb-2">Password</label>
                     <input type="password" name="password" placeholder="Masukkan password"
-                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none" required>
+                        class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-400 outline-none transition" required>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl transition shadow-md hover:shadow-lg">
-                    Login
+                <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl transition shadow-md hover:shadow-lg transform active:scale-95">
+                    Login Siswa
                 </button>
             </form>
 

@@ -44,13 +44,28 @@
     class="font-sans text-slate-800"
     style="background-image: url('{{ asset('images/sekolahHd.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
 
-    <nav class="w-full bg-[#004e92] h-16 flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-40">
-        <div class="text-white font-semibold text-lg">Al Masoem TOEFL CBT System</div>
+  <nav class="w-full bg-[#004e92] h-16 flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-40">
+        <div class="text-white font-semibold text-lg">Al Ma’soem TOEFL CBT System</div>
         
-        {{-- TOMBOL LOGIN: Diarahin ke route login Laravel --}}
-        <a href="{{ route('login') }}" class="text-white/80 hover:text-white font-medium transition no-underline">
-            Login
-        </a>
+        @auth
+            {{-- KONDISI 1: Kalau User SUDAH LOGIN --}}
+            <div class="flex items-center gap-4">
+                <span class="text-white/80 text-sm hidden sm:block">
+                    Hi, {{ Auth::user()->username }}
+                </span>
+                
+                {{-- Tombol ke Dashboard sesuai Role (Pake value dari Enum) --}}
+                <a href="{{ route(Auth::user()->role->value . '.dashboard') }}" 
+                   class="bg-white text-[#004e92] hover:bg-gray-100 font-bold px-4 py-2 rounded-lg transition shadow-sm">
+                    Ke Dashboard
+                </a>
+            </div>
+        @else
+            {{-- KONDISI 2: Kalau User BELUM LOGIN (Tamu) --}}
+            <a href="{{ route('login') }}" class="text-white/80 hover:text-white font-medium transition no-underline flex items-center gap-2">
+                Login <i data-lucide="log-in" size="18"></i>
+            </a>
+        @endauth
     </nav>
 
     <div class="mt-24 px-8 pb-20">

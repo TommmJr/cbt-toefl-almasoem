@@ -28,25 +28,34 @@ class AuthController extends Controller
             'password' => 'required|string',
             'role' => 'required|in:siswa,guru,admin',
         ], [
-            'username.required' => 'Username wajib diisi',
+            'username.required' => 'Username/NIS wajib diisi',
             'password.required' => 'Password wajib diisi',
             'role.required' => 'Role wajib dipilih',
         ]);
 
-        // Coba login dengan email dulu
-        if (Auth::attempt(['email' => $credentials['username'], 'password' => $credentials['password'], 'role' => $credentials['role']])) {
+        // 1. Cek Login via USERNAME (Siswa = NIS)
+        if (Auth::attempt([
+            'username' => $credentials['username'], 
+            'password' => $credentials['password'], 
+            'role' => $credentials['role']
+        ])) {
             $request->session()->regenerate();
+            //  Auth::user()->role 
             return $this->redirectToDashboard(Auth::user()->role);
         }
 
-        // Jika gagal, coba dengan username (name field)
-        if (Auth::attempt(['name' => $credentials['username'], 'password' => $credentials['password'], 'role' => $credentials['role']])) {
+        // 2. Cek Login via EMAIL (Backup)
+        if (Auth::attempt([
+            'email' => $credentials['username'], 
+            'password' => $credentials['password'], 
+            'role' => $credentials['role']
+        ])) {
             $request->session()->regenerate();
             return $this->redirectToDashboard(Auth::user()->role);
         }
 
         return back()
-            ->withErrors(['username' => 'Username, password, atau role tidak sesuai'])
+            ->withErrors(['username' => 'NIS/Username, password, atau role tidak sesuai'])
             ->withInput($request->except('password'));
     }
 
@@ -65,10 +74,15 @@ class AuthController extends Controller
 
     /**
      * Redirect ke dashboard sesuai role
+     * FIX: Hapus type hint 
      */
-    private function redirectToDashboard(string $role): RedirectResponse
+    private function redirectToDashboard($role): RedirectResponse
     {
-        return match($role) {
+        // LOGIC FIX:
+        // Kalau $role itu String biasa, ya pake langsung.
+        $roleName = (is_object($role) && isset($role->value)) ? $role->value : $role;
+
+        return match($roleName) {
             'siswa' => redirect()->route('siswa.dashboard'),
             'guru' => redirect()->route('guru.dashboard'),
             'admin' => redirect()->route('admin.dashboard'),

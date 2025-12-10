@@ -19,7 +19,7 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        // Check apakah user sudah login
+        // 1. Cek Login
         if (!Auth::check()) {
             return redirect()->route('login')
                 ->with('error', 'Anda harus login terlebih dahulu');
@@ -27,9 +27,14 @@ class CheckRole
 
         $user = Auth::user();
 
-        // Check apakah role user sesuai dengan yang diizinkan
-        if (!in_array($user->role, $roles, true)) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini');
+        // 2. FIX: Konversi Enum ke String
+        $userRole = (is_object($user->role) && isset($user->role->value)) 
+            ? $user->role->value 
+            : $user->role;
+
+        // 3. Cek Kesesuaian (Sekarang String vs String, Aman!)
+        if (!in_array($userRole, $roles)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini. Role Anda: ' . $userRole);
         }
 
         return $next($request);
