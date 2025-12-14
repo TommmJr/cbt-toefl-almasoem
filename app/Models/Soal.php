@@ -19,7 +19,33 @@ class Soal extends Model
      * Nama tabel
      */
     protected $table = 'soal';
+    /**
+     * Mass assignable attributes
+     */
+    protected $fillable = [
+        'ujian_section_id',
+        'nomor_urut',
+        'pertanyaan',
+        'tipe_soal',
 
+        'opsi_jawaban',
+        'jawaban_benar',
+
+        'bobot_nilai',
+        'min_kata',
+        'max_kata',
+        'audio_path',
+        'audio_duration',
+        'passage',
+    ];
+
+
+        protected function casts(): array 
+        {
+            return [
+             'opsi_jawaban' => 'array',
+            ];
+        }
 
     /**
      * Relasi ke jawaban siswa (1:many)
@@ -48,9 +74,9 @@ class Soal extends Model
     /**
      * : Cek apakah soal adalah pilihan ganda
      */
-    public function isPilihanGanda(): bool
+   public function isPilihanGanda(): bool
     {
-        return !empty($this->opsi_jawaban) && !empty($this->jawaban_benar);
+    return is_array($this->opsi_jawaban) && $this->jawaban_benar !== null;
     }
 
     /**

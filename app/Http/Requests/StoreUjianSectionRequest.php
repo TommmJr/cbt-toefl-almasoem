@@ -25,5 +25,13 @@ class StoreUjianSectionRequest extends FormRequest
             'urutan'        => ['required'],
             'durasi_menit'  => ['required'],
         ];
+
+        if ($this->session->isSectionExpired()) {
+    abort(403, 'Waktu section sudah habis');
+}
+
     }
+
+    
+
 }

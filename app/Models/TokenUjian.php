@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\StatusUjian;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use App\Models\SesiUjian; 
-use Carbon\Carbon;
 
 class TokenUjian extends Model
 {
@@ -45,54 +45,18 @@ class TokenUjian extends Model
         ];
     }
 
-    /**
-     * Generate token unik 6 digit (RACE CONDITION SAFE)
-     */
-    public static function generateKodeToken(): string
-    {
-        // Karakter yang aman (tanpa 0, O, I, 1 untuk avoid confusion)
-        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        $maxAttempts = 10;
+    /* ================= RELATIONS ================= */
 
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $token = '';
-            for ($i = 0; $i < 6; $i++) {
-                $token .= $chars[random_int(0, strlen($chars) - 1)];
-            }
-
-            // Cek uniqueness dengan DB lock (CRITICAL untuk race condition)
-            $exists = DB::table('token_ujian')
-                ->where('kode_token', $token)
-                ->lockForUpdate() // Pessimistic lock
-                ->exists();
-
-            if (!$exists) {
-                return $token;
-            }
-        }
-
-        throw new \RuntimeException('Gagal generate token unik setelah ' . $maxAttempts . ' percobaan');
-    }
-
-    /**
-     * Relasi ke ujian
-     */
     public function ujian(): BelongsTo
     {
         return $this->belongsTo(Ujian::class);
     }
 
-    /**
-     * Relasi ke user yang buat token
-     */
     public function pembuatToken(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dibuat_oleh');
     }
 
-    /**
-     * Relasi ke siswa yang sudah pakai token (many-to-many via pivot)
-     */
     public function siswaYangMemakai(): BelongsToMany
     {
         return $this->belongsToMany(Siswa::class, 'token_ujian_usage')
@@ -100,38 +64,34 @@ class TokenUjian extends Model
             ->withTimestamps();
     }
 
-    /**
-     * Relasi ke usage log
-     */
     public function usageLogs(): HasMany
     {
         return $this->hasMany(TokenUjianUsage::class);
     }
 
+    /* ================= QUERY SCOPE ================= */
+
     /**
-     * Scope: Token yang masih aktif dan valid
+     * Scope: token aktif, masih berlaku, dan kuota belum habis
+     * Dipakai di TokenUjianService (cache layer)
      */
-    public function scopeAktifDanValid($query)
+    public function scopeAktifDanValid(Builder $query): Builder
     {
-        return $query->where('is_active', true)
+        return $query
+            ->where('is_active', true)
             ->where('berlaku_dari', '<=', now())
             ->where('berlaku_sampai', '>=', now())
             ->whereColumn('jumlah_terpakai', '<', 'kuota_pemakaian');
     }
 
-    /**
-     * CRITICAL: Validasi token (RACE CONDITION SAFE)
-     * 
-     * @throws \Exception jika token invalid
-     */
+    /* ================= VALIDATION ================= */
+
     public function validasiToken(Siswa $siswa): void
     {
-        // 1. Cek apakah token aktif
-        if (!$this->is_active) {
+        if (! $this->is_active) {
             throw new \Exception('Token sudah dinonaktifkan');
         }
 
-        // 2. Cek expired
         if (now()->lessThan($this->berlaku_dari)) {
             throw new \Exception('Token belum bisa digunakan');
         }
@@ -140,7 +100,6 @@ class TokenUjian extends Model
             throw new \Exception('Token sudah kadaluarsa');
         }
 
-        // 3. Cek kuota (dengan DB lock untuk race condition)
         $currentToken = self::where('id', $this->id)
             ->lockForUpdate()
             ->first();
@@ -149,7 +108,6 @@ class TokenUjian extends Model
             throw new \Exception('Kuota token sudah habis');
         }
 
-        // 4. Cek apakah siswa ini sudah pakai token ini sebelumnya
         $sudahPakai = DB::table('token_ujian_usage')
             ->where('token_ujian_id', $this->id)
             ->where('siswa_id', $siswa->id)
@@ -159,10 +117,12 @@ class TokenUjian extends Model
             throw new \Exception('Anda sudah menggunakan token ini sebelumnya');
         }
 
-        // 5. Cek apakah siswa sudah punya sesi aktif untuk ujian ini
         $sesiAktif = SesiUjian::where('ujian_id', $this->ujian_id)
             ->where('siswa_id', $siswa->id)
-            ->whereIn('status', ['belum_mulai', 'sedang_mengerjakan'])
+            ->whereIn('status', [
+                StatusUjian::BELUM_MULAI,
+                StatusUjian::SEDANG_MENGERJAKAN,
+            ])
             ->exists();
 
         if ($sesiAktif) {
@@ -170,29 +130,31 @@ class TokenUjian extends Model
         }
     }
 
-    /**
-     * Gunakan token untuk create sesi ujian (ATOMIC TRANSACTION)
-     */
-    public function gunakanToken(Siswa $siswa, string $ipAddress, string $userAgent): SesiUjian
-    {
+    /* ================= CORE ================= */
+
+    public function gunakanToken(
+        Siswa $siswa,
+        string $ipAddress,
+        string $userAgent
+    ): SesiUjian {
         return DB::transaction(function () use ($siswa, $ipAddress, $userAgent) {
-            // Validasi ulang di dalam transaction
+
             $this->validasiToken($siswa);
 
-            // Increment jumlah terpakai (dengan lock)
             $this->lockForUpdate()->increment('jumlah_terpakai');
             $this->update(['last_used_at' => now()]);
 
-            // Buat sesi ujian baru
             $sesiUjian = SesiUjian::create([
                 'ujian_id' => $this->ujian_id,
                 'siswa_id' => $siswa->id,
-                'status' => 'belum_mulai',
+                'status' => StatusUjian::SEDANG_MENGERJAKAN,
+                'current_section_index' => 0,
+                'section_mulai_at' => now(),
+                'waktu_mulai' => now(),
                 'ip_address' => $ipAddress,
                 'user_agent' => $userAgent,
             ]);
 
-            // Catat penggunaan token
             DB::table('token_ujian_usage')->insert([
                 'token_ujian_id' => $this->id,
                 'siswa_id' => $siswa->id,
@@ -204,23 +166,5 @@ class TokenUjian extends Model
 
             return $sesiUjian;
         });
-    }
-
-    /**
-     * Helper: Cek apakah token masih bisa dipakai
-     */
-    public function isMasihBisaDipakai(): bool
-    {
-        return $this->is_active
-            && now()->between($this->berlaku_dari, $this->berlaku_sampai)
-            && $this->jumlah_terpakai < $this->kuota_pemakaian;
-    }
-
-    /**
-     * Helper: Hitung sisa kuota
-     */
-    public function getSisaKuotaAttribute(): int
-    {
-        return max(0, $this->kuota_pemakaian - $this->jumlah_terpakai);
     }
 }

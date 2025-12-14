@@ -3,7 +3,7 @@
 <ul>
 @forelse ($ujians as $ujian)
     <li>
-        <a href="{{ route('ujian.show', $ujian->id) }}">
+        <a href="{{ route('siswa.ujian.detail', $ujian->id) }}">
             {{ $ujian->judul }}
         </a>
         <br>

@@ -12,4 +12,13 @@
 @endforeach
 </ul>
 
-<a href="{{ route('ujian.index') }}">← Kembali</a>
+<hr>
+
+<a href="{{ route('siswa.ujian.akses') }}">
+    <button>
+        Mulai Ujian
+    </button>
+</a>
+
+
+<a href="{{ route('siswa.ujian.index') }}">← Kembali</a>

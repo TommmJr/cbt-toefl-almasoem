@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\{RedirectResponse, Request};
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use App\Models\User;
 
 class AuthController extends Controller
 {
@@ -21,43 +22,61 @@ class AuthController extends Controller
     /**
      * Proses login dengan validasi role
      */
-    public function login(Request $request): RedirectResponse
-    {
-        $credentials = $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
-            'role' => 'required|in:siswa,guru,admin',
-        ], [
-            'username.required' => 'Username/NIS wajib diisi',
-            'password.required' => 'Password wajib diisi',
-            'role.required' => 'Role wajib dipilih',
+public function login(Request $request): RedirectResponse
+{
+    $request->validate([
+        'username' => 'required|string',
+        'password' => 'required|string',
+        'role' => 'nullable|in:siswa,guru,admin',
+    ], [
+        'username.required' => 'Username/NIS wajib diisi',
+        'password.required' => 'Password wajib diisi',
+    ]);
+
+    $login = $request->username;
+
+    // 1. Cari user
+    $user = User::where('username', $login)
+        ->orWhere('email', $login)
+        ->first();
+
+    if (! $user) {
+        return back()->withErrors([
+            'username' => 'NIS / Username tidak ditemukan',
         ]);
-
-        // 1. Cek Login via USERNAME (Siswa = NIS)
-        if (Auth::attempt([
-            'username' => $credentials['username'], 
-            'password' => $credentials['password'], 
-            'role' => $credentials['role']
-        ])) {
-            $request->session()->regenerate();
-            //  Auth::user()->role 
-            return $this->redirectToDashboard(Auth::user()->role);
-        }
-
-        // 2. Cek Login via EMAIL (Backup)
-        if (Auth::attempt([
-            'email' => $credentials['username'], 
-            'password' => $credentials['password'], 
-            'role' => $credentials['role']
-        ])) {
-            $request->session()->regenerate();
-            return $this->redirectToDashboard(Auth::user()->role);
-        }
-
-        return back()
-            ->withErrors(['username' => 'NIS/Username, password, atau role tidak sesuai'])
-            ->withInput($request->except('password'));
     }
+
+    // 2. Cek aktif SEBELUM dianggap login sah
+    if (! $user->is_active) {
+        return back()->withErrors([
+            'username' => 'Akun tidak aktif',
+        ]);
+    }
+
+    // 3. Auth (tanpa role)
+    if (! Auth::attempt([
+        'username' => $user->username,
+        'password' => $request->password,
+    ])) {
+        return back()->withErrors([
+            'password' => 'Password salah',
+        ]);
+    }
+
+    // 4. Session baru dianggap sah DI SINI
+    $request->session()->regenerate();
+
+    // 5. Validasi role opsional
+    if ($request->filled('role') && $user->role->value !== $request->role) {
+        Auth::logout();
+        return back()->withErrors([
+            'role' => 'Role tidak sesuai dengan akun',
+        ]);
+    }
+
+    // 6. Redirect sesuai role
+    return $this->redirectToDashboard($user->role);
+}
 
     /**
      * Logout user

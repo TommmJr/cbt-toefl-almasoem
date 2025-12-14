@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\StatusUjian;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,11 +34,7 @@ class SesiUjian extends Model
         'section_mulai_at' => 'datetime',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | RELATIONS
-    |--------------------------------------------------------------------------
-    */
+    /* ================= RELATIONS ================= */
 
     public function siswa(): BelongsTo
     {
@@ -54,11 +51,7 @@ class SesiUjian extends Model
         return $this->hasMany(Jawaban::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ACCESS CONTROL
-    |--------------------------------------------------------------------------
-    */
+    /* ================= ACCESS ================= */
 
     public function pastikanBisaDiaksesOleh(int $siswaId): void
     {
@@ -67,15 +60,11 @@ class SesiUjian extends Model
         }
 
         if (! $this->status->canContinue()) {
-            abort(403, 'Ujian tidak bisa diakses');
+            abort(403, 'Ujian sudah selesai / terkunci');
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | SECTION FLOW (INTI CBT)
-    |--------------------------------------------------------------------------
-    */
+    /* ================= SECTION FLOW ================= */
 
     public function sectionAktif()
     {
@@ -86,31 +75,10 @@ class SesiUjian extends Model
             ->first();
     }
 
-    public function sectionSelesai(): bool
-    {
-        $section = $this->sectionAktif();
-
-        if (! $section) {
-            return true;
-        }
-
-        $soalIds = $section->soal()->pluck('id');
-        $jumlahSoal = $soalIds->count();
-
-        if ($jumlahSoal === 0) {
-            return true;
-        }
-
-        $jawabanMasuk = $this->jawaban()
-            ->whereIn('soal_id', $soalIds)
-            ->count();
-
-        return $jumlahSoal === $jawabanMasuk;
-    }
-
     public function lanjutKeSectionBerikutnya(): void
     {
         $this->increment('current_section_index');
+        $this->update(['section_mulai_at' => now()]);
     }
 
     public function semuaSectionSelesai(): bool
@@ -118,23 +86,37 @@ class SesiUjian extends Model
         return $this->sectionAktif() === null;
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | TIMER (SERVER-SIDE)
-    |--------------------------------------------------------------------------
-    */
+    /* ================= TIMER (SERVER-SIDE) ================= */
+
+    public function sectionEndTime(): Carbon
+    {
+        return $this->section_mulai_at
+            ->copy()
+            ->addMinutes($this->sectionAktif()->durasi_menit);
+    }
+
+    public function isSectionExpired(): bool
+    {
+        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+            return true;
+        }
+
+        return now()->greaterThanOrEqualTo($this->sectionEndTime());
+    }
 
     public function sisaWaktuSection(): int
     {
-        $section = $this->sectionAktif();
-
-        if (! $section || ! $this->section_mulai_at) {
+        if (! $this->section_mulai_at) {
             return 0;
         }
 
-        $durasiDetik = $section->durasi_menit * 60;
-        $habisPada = $this->section_mulai_at->copy()->addSeconds($durasiDetik);
+        $sisa = now()->diffInSeconds(
+            $this->sectionEndTime(),
+            false
+        );
 
-        return now()->diffInSeconds($habisPada, false);
+        return max(0, (int) floor($sisa));
     }
+
+
 }

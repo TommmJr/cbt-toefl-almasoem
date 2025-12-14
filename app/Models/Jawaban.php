@@ -50,6 +50,7 @@ class Jawaban extends Model
             'teacher_score' => 'decimal:2',
             'waktu_jawab' => 'datetime',
             'jumlah_kata' => 'integer',
+            'is_locked' => 'boolean',
         ];
     }
 

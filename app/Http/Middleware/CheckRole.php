@@ -18,25 +18,24 @@ class CheckRole
      * @param  string  ...$roles  Role yang diizinkan (siswa, guru, admin)
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
-    {
-        // 1. Cek Login
-        if (!Auth::check()) {
-            return redirect()->route('login')
-                ->with('error', 'Anda harus login terlebih dahulu');
-        }
-
-        $user = Auth::user();
-
-        // 2. FIX: Konversi Enum ke String
-        $userRole = (is_object($user->role) && isset($user->role->value)) 
-            ? $user->role->value 
-            : $user->role;
-
-        // 3. Cek Kesesuaian (Sekarang String vs String, Aman!)
-        if (!in_array($userRole, $roles)) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini. Role Anda: ' . $userRole);
-        }
-
-        return $next($request);
+{
+    if (!Auth::check()) {
+        return redirect()->route('login');
     }
+
+    $user = Auth::user();
+
+    // HARD CAST — STOP DRAMA
+    $userRole = is_string($user->role)
+        ? $user->role
+        : $user->role->value;
+
+    if (!in_array($userRole, $roles, true)) {
+        // JANGAN abort, REDIRECT BIAR KELIHATAN
+        return redirect()->route('siswa.dashboard');
+    }
+
+    return $next($request);
+}
+
 }
