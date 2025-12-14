@@ -44,7 +44,7 @@
                     </span>
                 </div>
 
-                <div class="hidden group-hover:block absolute left-12 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-70>">
+                <div class="hidden group-hover:block absolute left-10 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-70>">
                     <form action="{{ route('logout') }}" method="POST">
                         @csrf
                         <button type="submit" class="w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2">

@@ -20,49 +20,6 @@ class Soal extends Model
      */
     protected $table = 'soal';
 
-    /**
-     * Mass assignable attributes
-     */
-    protected $fillable = [
-        'ujian_id',
-        'tipe_soal',
-        'nomor_urut',
-        'pertanyaan',
-        'audio_path',
-        'audio_duration',
-        'passage',
-        'opsi_jawaban',
-        'jawaban_benar',
-        'rubrik_penilaian',
-        'min_kata',
-        'max_kata',
-        'bobot_nilai',
-    ];
-
-    /**
-     * Cast attributes
-     */
-    protected function casts(): array
-    {
-        return [
-            'tipe_soal' => TipeSoal::class,
-            'nomor_urut' => 'integer',
-            'audio_duration' => 'integer',
-            'opsi_jawaban' => 'array', // JSON ke array
-            'rubrik_penilaian' => 'array',
-            'min_kata' => 'integer',
-            'max_kata' => 'integer',
-            'bobot_nilai' => 'integer',
-        ];
-    }
-
-    /**
-     * Relasi ke ujian (many:1)
-     */
-    public function ujian(): BelongsTo
-    {
-        return $this->belongsTo(Ujian::class);
-    }
 
     /**
      * Relasi ke jawaban siswa (1:many)
@@ -166,14 +123,6 @@ class Soal extends Model
 public function ujianSection(): BelongsTo
 {
     return $this->belongsTo(UjianSection::class);
-}
-
-/**
- * Helper: Ambil tipe soal dari section (backward compatibility)
- */
-public function getTipeSoalAttribute(): TipeSoal
-{
-    return $this->ujianSection->tipe_section;
 }
 
 }

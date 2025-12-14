@@ -66,14 +66,6 @@ class Ujian extends Model
     }
 
     /**
-     * Relasi ke soal-soal dalam ujian (1:many)
-     */
-    public function soal(): HasMany
-    {
-        return $this->hasMany(Soal::class)->orderBy('nomor_urut');
-    }
-
-    /**
      * Relasi ke sesi ujian (1:many)
      */
     public function sesiUjian(): HasMany

@@ -22,7 +22,7 @@
     <nav class="w-full bg-[#004e92] h-16 flex items-center justify-between px-6 shadow-md fixed top-0 left-0 right-0 z-40">
         <div class="text-white font-semibold text-lg">Al Ma’soem TOEFL CBT System</div>
         <a href="{{ route('landing') }}" class="text-white/80 hover:text-white font-medium transition no-underline">
-            Back to Landing Page
+            Kembali 
         </a>
     </nav>  
 
@@ -40,10 +40,8 @@
                 </div>
             @endif
 
-            {{-- 👉 INI DIA YANG HILANG KEMARIN! --}}
             <form action="{{ route('login.post') }}" method="POST">
                 @csrf 
-                {{-- 👉 INI JUGA PENTING BIAR GAK ERROR ROLE --}}
                 <input type="hidden" name="role" value="siswa">
 
                 <div class="mb-4">

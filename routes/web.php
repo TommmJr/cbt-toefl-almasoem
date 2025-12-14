@@ -1,32 +1,25 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Guru\DashboardController as GuruDashboard;
-use App\Http\Controllers\Guru\SoalController;
-use App\Http\Controllers\LandingPageController;
-use App\Http\Controllers\Siswa\DashboardController as SiswaDashboard;
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Siswa\DashboardController as SiswaDashboard;
+use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes
+| Public
 |--------------------------------------------------------------------------
 */
-
 Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
 /*
 |--------------------------------------------------------------------------
-| Authentication Routes (Native)
+| Auth
 |--------------------------------------------------------------------------
 */
-
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    
-    // PERBAIKAN: Tambahin ->name('login.post') biar view login.blade.php gak error
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 });
 
@@ -34,43 +27,39 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 
+/*
+|--------------------------------------------------------------------------
+| SISWA
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'role:siswa'])->prefix('siswa')->name('siswa.')->group(function () {
 
+    Route::get('/dashboard', [SiswaDashboard::class, 'index'])
+        ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
+    // 1. LIST UJIAN
+    Route::get('/ujian', [SiswaUjianController::class, 'index'])
+        ->name('ujian.index');
 
-    // Profile Routes (All roles)
-    // Pastikan ProfileController ada, kalau belum ada hapus blok ini dulu
-    // Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    // Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    // Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // 2. DETAIL UJIAN
+    Route::get('/ujian/{ujian}', [SiswaUjianController::class, 'detail'])
+        ->name('ujian.detail');
 
-    /*
-    | SISWA Routes
-    */
-    Route::middleware(['role:siswa'])->prefix('siswa')->name('siswa.')->group(function () {
-        Route::get('/dashboard', [SiswaDashboard::class, 'index'])->name('dashboard');
-    });
+    // 3. FORM TOKEN
+    Route::get('/ujian/akses', [SiswaUjianController::class, 'formToken'])
+        ->name('ujian.akses');
 
-    /*
-    | GURU Routes
-    */
-    Route::middleware(['role:guru'])->prefix('guru')->name('guru.')->group(function () {
-        Route::get('/dashboard', [GuruDashboard::class, 'index'])->name('dashboard');
-        
-        // Management Soal (Ini yang bikin error tadi kalau controllernya gak ada)
-        Route::resource('soal', SoalController::class)->except(['show', 'edit', 'update']);
-    });
+    // 4. SUBMIT TOKEN
+    Route::post('/ujian/akses', [SiswaUjianController::class, 'aksesUjian'])
+        ->name('ujian.akses.post');
 
-    /*
-    | ADMIN Routes
-    */
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
-    });
+    // 5. MULAI UJIAN
+    Route::get('/ujian/mulai/{sesi}', [SiswaUjianController::class, 'show'])
+        ->name('ujian.mulai');
 
+    // 6. SELESAI UJIAN
+    Route::post('/ujian/jawab', [SiswaUjianController::class, 'simpanJawaban'])
+        ->name('ujian.jawab');
 });
 
-
-Route::fallback(function () {
-    return "<h1>404 - Halaman tidak ditemukan</h1>";
-});
+Route::fallback(fn () => '<h1>404</h1>');

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\TipeSoal;
+use App\Enums\StatusUjian;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,40 +14,30 @@ class SesiUjian extends Model
 {
     use HasFactory;
 
-    protected $table = 'sesi_ujians';
-    
-    protected $guarded = ['id'];
-    
     protected $fillable = [
         'ujian_id',
-        'tipe_section',
-        'urutan',
-        'durasi_menit',
-        'jumlah_soal_target',
-        'bobot_nilai',
-        'instruksi_custom',
-        'is_active',
         'siswa_id',
         'status',
+        'current_section_index',
+        'section_mulai_at',
+        'waktu_mulai',
+        'waktu_selesai',
         'ip_address',
         'user_agent',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'tipe_section' => TipeSoal::class,
-            'urutan' => 'integer',
-            'durasi_menit' => 'integer',
-            'jumlah_soal_target' => 'integer',
-            'bobot_nilai' => 'decimal:2',
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'status' => StatusUjian::class,
+        'waktu_mulai' => 'datetime',
+        'waktu_selesai' => 'datetime',
+        'section_mulai_at' => 'datetime',
+    ];
 
-    /**
-     * Relasi ke ujian
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONS
+    |--------------------------------------------------------------------------
+    */
 
     public function siswa(): BelongsTo
     {
@@ -59,72 +49,92 @@ class SesiUjian extends Model
         return $this->belongsTo(Ujian::class);
     }
 
-    /**
-     * Relasi ke soal-soal dalam section ini
-     */
-    public function soal(): HasMany
+    public function jawaban(): HasMany
     {
-        return $this->hasMany(Soal::class)->orderBy('nomor_urut');
+        return $this->hasMany(Jawaban::class);
     }
 
-    /**
-     * Scope: Urutkan berdasarkan urutan section
-     */
-    public function scopeOrdered($query)
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESS CONTROL
+    |--------------------------------------------------------------------------
+    */
+
+    public function pastikanBisaDiaksesOleh(int $siswaId): void
     {
-        return $query->orderBy('urutan');
+        if ($this->siswa_id !== $siswaId) {
+            abort(403, 'Ini bukan sesi ujian lu');
+        }
+
+        if (! $this->status->canContinue()) {
+            abort(403, 'Ujian tidak bisa diakses');
+        }
     }
 
-    /**
-     * Scope: Section yang aktif
-     */
-    public function scopeAktif($query)
+    /*
+    |--------------------------------------------------------------------------
+    | SECTION FLOW (INTI CBT)
+    |--------------------------------------------------------------------------
+    */
+
+    public function sectionAktif()
     {
-        return $query->where('is_active', true);
+        return $this->ujian
+            ->sections()
+            ->orderBy('urutan')
+            ->skip($this->current_section_index)
+            ->first();
     }
 
-    /**
-     * Helper: Ambil config default dari Enum
-     */
-    public function getConfigDefaultAttribute(): array
+    public function sectionSelesai(): bool
     {
-        return $this->tipe_section->config();
+        $section = $this->sectionAktif();
+
+        if (! $section) {
+            return true;
+        }
+
+        $soalIds = $section->soal()->pluck('id');
+        $jumlahSoal = $soalIds->count();
+
+        if ($jumlahSoal === 0) {
+            return true;
+        }
+
+        $jawabanMasuk = $this->jawaban()
+            ->whereIn('soal_id', $soalIds)
+            ->count();
+
+        return $jumlahSoal === $jawabanMasuk;
     }
 
-    /**
-     * Helper: Ambil label section
-     */
-    public function getLabelAttribute(): string
+    public function lanjutKeSectionBerikutnya(): void
     {
-        return $this->tipe_section->label();
+        $this->increment('current_section_index');
     }
 
-    /**
-     * Helper: Ambil icon section
-     */
-    public function getIconAttribute(): string
+    public function semuaSectionSelesai(): bool
     {
-        return $this->tipe_section->icon();
+        return $this->sectionAktif() === null;
     }
 
-    /**
-     * Helper: Cek apakah jumlah soal sudah sesuai target
-     */
-    public function isSoalLengkap(): bool
-    {
-        return $this->soal()->count() >= $this->jumlah_soal_target;
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | TIMER (SERVER-SIDE)
+    |--------------------------------------------------------------------------
+    */
 
-    /**
-     * Helper: Hitung progress input soal (%)
-     */
-    public function getProgressSoalAttribute(): int
+    public function sisaWaktuSection(): int
     {
-        if ($this->jumlah_soal_target === 0) {
+        $section = $this->sectionAktif();
+
+        if (! $section || ! $this->section_mulai_at) {
             return 0;
         }
 
-        $jumlahSoal = $this->soal()->count();
-        return (int) min(100, ($jumlahSoal / $this->jumlah_soal_target) * 100);
+        $durasiDetik = $section->durasi_menit * 60;
+        $habisPada = $this->section_mulai_at->copy()->addSeconds($durasiDetik);
+
+        return now()->diffInSeconds($habisPada, false);
     }
 }
