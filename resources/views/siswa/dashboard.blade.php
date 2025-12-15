@@ -144,6 +144,16 @@
             Login sebagai: <strong class="text-gray-600">{{ Auth::user()->username }}</strong> • 
             Role: <span class="capitalize">{{ Auth::user()->role->value ?? 'Siswa' }}</span>
         </footer>
+            @if ($sesiTerakhir && $sesiTerakhir->status === 'selesai')
+            <hr>
+
+            <h3>Hasil Ujian Terakhir</h3>
+            <p>{{ $sesiTerakhir->ujian->judul }}</p>
+
+            <a href="{{ route('siswa.ujian.hasil', $sesiTerakhir->id) }}">
+                Lihat Hasil
+            </a>
+             @endif
 
     </main>
 

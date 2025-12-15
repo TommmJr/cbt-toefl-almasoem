@@ -17,25 +17,25 @@ class CheckRole
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      * @param  string  ...$roles  Role yang diizinkan (siswa, guru, admin)
      */
-    public function handle(Request $request, Closure $next, string ...$roles): Response
-{
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
+        public function handle(Request $request, Closure $next, string ...$roles): Response
+        {
+            if (!Auth::check()) {
+                return redirect()->route('login');
+            }
 
-    $user = Auth::user();
+            $user = Auth::user();
 
-    // HARD CAST — STOP DRAMA
-    $userRole = is_string($user->role)
-        ? $user->role
-        : $user->role->value;
+            $userRole = is_string($user->role)
+                ? $user->role
+                : $user->role->value;
 
-    if (!in_array($userRole, $roles, true)) {
-        // JANGAN abort, REDIRECT BIAR KELIHATAN
-        return redirect()->route('siswa.dashboard');
-    }
+            if (!in_array($userRole, $roles, true)) {
+                // ❗ JANGAN redirect ke route protected
+                abort(403, 'Role tidak diizinkan');
+            }
 
-    return $next($request);
-}
+            return $next($request);
+        }
+
 
 }

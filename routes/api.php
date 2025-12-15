@@ -3,15 +3,31 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TokenUjianController;
-use App\Http\Controllers\Admin\UjianController;
+use App\Http\Controllers\Admin\UjianController as AdminUjianController;
+use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
-// 1. Route Login (PUBLIC)
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/login', [AuthController::class, 'login']);
 
-// 2. ROUTE TEST ENUM (TANPA AUTH, TANPA CSRF)
-Route::post('/test/ujian/section', [UjianController::class, 'storeSection']);
+/*
+|--------------------------------------------------------------------------
+| Route Test / Development
+|--------------------------------------------------------------------------
+*/
 
-// 3. Route Protected (Butuh Token Login)
+Route::post('/test/ujian/section', [AdminUjianController::class, 'storeSection']);
+
+/*
+|--------------------------------------------------------------------------
+| Protected Routes (Sanctum)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -19,4 +35,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('/token/validate', [TokenUjianController::class, 'validateToken']);
     Route::post('/token/generate', [TokenUjianController::class, 'generate']);
+
 });

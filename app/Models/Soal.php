@@ -74,18 +74,20 @@ class Soal extends Model
     /**
      * : Cek apakah soal adalah pilihan ganda
      */
-   public function isPilihanGanda(): bool
+    public function isPilihanGanda(): bool
     {
-    return is_array($this->opsi_jawaban) && $this->jawaban_benar !== null;
+        return in_array($this->tipe_soal, ['listening', 'reading'], true);
     }
+
 
     /**
      * : Cek apakah soal adalah essay/writing
      */
     public function isEssay(): bool
     {
-        return $this->tipe_soal === TipeSoal::WRITING;
+        return $this->tipe_soal === 'writing';
     }
+
 
     /**
      * : Cek apakah soal punya audio

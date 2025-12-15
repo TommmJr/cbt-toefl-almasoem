@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class SesiUjian extends Model
 {
@@ -51,42 +52,56 @@ class SesiUjian extends Model
         return $this->hasMany(Jawaban::class);
     }
 
-    /* ================= ACCESS ================= */
+    /* ================= ACCESS CONTROL ================= */
 
-    public function pastikanBisaDiaksesOleh(int $siswaId): void
+    public function pastikanMilikSiswa(int $siswaId): void
     {
         if ($this->siswa_id !== $siswaId) {
-            abort(403, 'Ini bukan sesi ujian lu');
+            abort(403, 'Bukan pemilik sesi');
         }
+    }
 
-        if (! $this->status->canContinue()) {
-            abort(403, 'Ujian sudah selesai / terkunci');
+    public function pastikanBelumSelesai(): void
+    {
+        if ($this->status === StatusUjian::SELESAI) {
+            abort(403, 'UJIAN SUDAH SELESAI / TERKUNCI');
         }
     }
 
     /* ================= SECTION FLOW ================= */
 
-    public function sectionAktif()
-    {
-        return $this->ujian
-            ->sections()
-            ->orderBy('urutan')
-            ->skip($this->current_section_index)
-            ->first();
-    }
+   public function sectionAktif()
+{
+    return $this->ujian
+        ->sections()
+        ->orderBy('urutan')
+        ->skip($this->current_section_index)
+        ->first();
+}
+
+    public function masihAdaSection(): bool
+{
+    $totalSection = $this->ujian->sections->count();
+
+    return ($this->current_section_index + 1) < $totalSection;
+}
+
 
     public function lanjutKeSectionBerikutnya(): void
-    {
-        $this->increment('current_section_index');
-        $this->update(['section_mulai_at' => now()]);
-    }
+{
+    $this->increment('current_section_index');
+    $this->update(['section_mulai_at' => now()]);
+}
 
-    public function semuaSectionSelesai(): bool
-    {
-        return $this->sectionAktif() === null;
-    }
 
-    /* ================= TIMER (SERVER-SIDE) ================= */
+   public function semuaSectionSelesai(): bool
+{
+    return $this->current_section_index >= $this->ujian->sections()->count();
+}
+
+    
+
+    /* ================= TIMER ================= */
 
     public function sectionEndTime(): Carbon
     {
@@ -96,27 +111,36 @@ class SesiUjian extends Model
     }
 
     public function isSectionExpired(): bool
-    {
-        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
-            return true;
-        }
-
-        return now()->greaterThanOrEqualTo($this->sectionEndTime());
+{
+    if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+        return true;
     }
 
-    public function sisaWaktuSection(): int
-    {
-        if (! $this->section_mulai_at) {
-            return 0;
-        }
+    return now()->greaterThanOrEqualTo($this->sectionEndTime());
+}
 
-        $sisa = now()->diffInSeconds(
-            $this->sectionEndTime(),
-            false
-        );
-
-        return max(0, (int) floor($sisa));
+   public function sisaWaktuSection(): int
+{
+    if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+        return 0;
     }
 
+    $sisa = now()->diffInSeconds(
+        $this->sectionEndTime(),
+        false
+    );
+
+    return max(0, (int) floor($sisa));
+}
+
+
+
+
+    public function pastikanBisaDiaksesOleh(int $siswaId): void
+    {
+        if ((int) $this->siswa_id !== (int) $siswaId) {
+            throw new AccessDeniedHttpException('Sesi ujian bukan milik siswa ini');
+        }
+    }
 
 }

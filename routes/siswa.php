@@ -44,4 +44,19 @@ Route::prefix('siswa')
         // DETAIL UJIAN (PARAMETER TERAKHIR, BIAR GA MAKAN `akses`)
         Route::get('/ujian/{ujian}', [UjianController::class, 'detail'])
             ->name('ujian.detail');
+        
+        // SUBMIT SECTION (MANUAL)
+        Route::post('/ujian/submit-section', [UjianController::class, 'submitSection'])
+            ->name('ujian.submitSection');
+
+        // SIMPAN JAWABAN (AUTOSAVE)
+        Route::post('/ujian/simpan-jawaban', [UjianController::class, 'simpanJawaban'])
+            ->name('ujian.simpanJawaban');
+
+        // HASIL UJIAN SISWA
+        Route::get('/hasil/{sesi}', [\App\Http\Controllers\Siswa\UjianController::class, 'hasil'])
+            ->name('hasil');
+
+
+
     });

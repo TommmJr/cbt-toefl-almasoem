@@ -6,6 +6,16 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboard;
 use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
+
+
+Route::get('/debug-auth', function () {
+    return [
+        'auth_check' => auth()->check(),
+        'user_id'    => auth()->id(),
+        'user'       => auth()->user(),
+    ];
+});
+
 /*
 |--------------------------------------------------------------------------
 | Public
@@ -29,4 +39,6 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
+
+
 

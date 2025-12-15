@@ -10,28 +10,35 @@ class AutoSubmitSectionAction
 {
     public function handle(SesiUjian $sesi): void
     {
-        $section = $sesi->sectionAktif();
-
-        if (! $section) {
-            return;
-        }
-
         if (! $sesi->isSectionExpired()) {
             return;
         }
 
+        $this->submit($sesi);
+    }
+
+    public function submit(SesiUjian $sesi): void
+    {
+        $section = $sesi->sectionAktif();
+        if (! $section) return;
+
         DB::transaction(function () use ($sesi, $section) {
 
-            // Kunci jawaban (opsional flag kalau ada)
+            $soalIds = $section->soal()->pluck('id');
+
+            // Kunci jawaban biar gak bisa diedit lagi
             $sesi->jawaban()
-                ->whereIn('soal_id', $section->soal()->pluck('id'))
+                ->whereIn('soal_id', $soalIds)
+                ->where('is_locked', false)
                 ->update(['is_locked' => true]);
 
-            // Nilai PG
-            $sesi->jawaban
-                ->each(fn ($j) => $j->cekJawabanPilihanGanda());
+            // Hitung nilai (Perbaikan nama method di sini)
+            $sesi->jawaban()
+                ->whereIn('soal_id', $soalIds)
+                ->get()
+                ->each(fn ($j) => $j->nilaiPilihanGanda());
 
-            // Pindah section atau selesai
+            // Cek lanjut atau selesai
             if ($sesi->semuaSectionSelesai()) {
                 $sesi->update([
                     'status' => StatusUjian::SELESAI,
