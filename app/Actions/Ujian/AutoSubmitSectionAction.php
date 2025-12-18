@@ -8,37 +8,64 @@ use Illuminate\Support\Facades\DB;
 
 class AutoSubmitSectionAction
 {
-    public function handle(SesiUjian $sesi): void
+    /**
+     * AUTO SUBMIT
+     * - Dipanggil saat page load
+     * - Dipanggil saat timer habis
+     */
+    public function handle(SesiUjian $sesi): array
     {
         if (! $sesi->isSectionExpired()) {
-            return;
+            return [];
         }
 
         $this->submit($sesi);
+
+        if ($sesi->status === StatusUjian::SELESAI) {
+            return [
+                'redirect' => route('siswa.hasil', $sesi->id),
+            ];
+        }
+
+        return [
+            'redirect' => route('siswa.ujian.mulai', $sesi->id),
+        ];
     }
 
+    /**
+     * SUBMIT SECTION
+     * - Manual button
+     * - Auto saat waktu habis
+     */
     public function submit(SesiUjian $sesi): void
     {
         $section = $sesi->sectionAktif();
-        if (! $section) return;
+        if (! $section) {
+            return;
+        }
 
         DB::transaction(function () use ($sesi, $section) {
 
             $soalIds = $section->soal()->pluck('id');
 
-            // Kunci jawaban biar gak bisa diedit lagi
+            // 1. Kunci jawaban section ini
             $sesi->jawaban()
                 ->whereIn('soal_id', $soalIds)
                 ->where('is_locked', false)
                 ->update(['is_locked' => true]);
 
-            // Hitung nilai (Perbaikan nama method di sini)
+            // 2. Nilai pilihan ganda
             $sesi->jawaban()
                 ->whereIn('soal_id', $soalIds)
                 ->get()
                 ->each(fn ($j) => $j->nilaiPilihanGanda());
 
-            // Cek lanjut atau selesai
+            // 3. Reset timer
+            $sesi->update([
+                'section_mulai_at' => null,
+            ]);
+
+            // 4. Lanjut atau selesai
             if ($sesi->semuaSectionSelesai()) {
                 $sesi->update([
                     'status' => StatusUjian::SELESAI,

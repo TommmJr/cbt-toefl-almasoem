@@ -1,3 +1,7 @@
+@extends('layouts.app')
+
+@section('content')
+
 @php
     $isExpired = $sisaDetik <= 0;
 @endphp
@@ -53,11 +57,13 @@
 
 {{-- ================= SUBMIT SECTION ================= --}}
 @if (! $isExpired)
-    <div style="margin-top: 20px;">
+    <div style="margin-top:20px;">
         <button
             type="button"
-            onclick="autoSubmitSection()"
             id="btn-submit-manual"
+            data-submit-url="{{ route('siswa.ujian.submitSection') }}"
+            data-sesi-id="{{ $sesi->id }}"
+            onclick="autoSubmitSection()"
             style="padding:10px 20px; font-size:16px; cursor:pointer; background:#004e92; color:white; border:none; border-radius:5px;"
         >
             Lanjut ke Section Berikutnya →
@@ -76,29 +82,21 @@ let sudahSubmit = false;
 
 /* ================= AUTOSAVE JAWABAN ================= */
 function simpanJawaban(soalId, jawaban) {
-    console.log('KIRIM JAWABAN', soalId, jawaban);
-
     fetch("{{ route('siswa.ujian.simpanJawaban') }}", {
         method: "POST",
-        credentials: "same-origin",
         headers: {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            "X-CSRF-TOKEN": document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content')
         },
         body: JSON.stringify({
             sesi_id: {{ $sesi->id }},
             soal_id: soalId,
             jawaban: jawaban
         })
-    })
-    .then(res => res.json())
-    .then(data => {
-        console.log('RESPON SERVER', data);
-    })
-    .catch(err => {
-        console.error('AUTOSAVE ERROR', err);
-    });
+    }).catch(err => console.error(err));
 }
 
 /* ================= DEBOUNCE ESSAY ================= */
@@ -110,27 +108,39 @@ function debounceSimpan(soalId, jawaban) {
 }
 
 /* ================= SUBMIT SECTION ================= */
-    function autoSubmitSection() {
-        fetch("{{ route('siswa.ujian.submitSection') }}", {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "X-CSRF-TOKEN": "{{ csrf_token() }}"
-            },
-            body: JSON.stringify({
-                sesi_id: {{ $sesi->id }}
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-        })
-        .catch(err => console.error(err));
-    }
+window.autoSubmitSection = function () {
+    if (sudahSubmit) return;
+    sudahSubmit = true;
+
+    const btn = document.getElementById('btn-submit-manual');
+    if (btn) btn.disabled = true;
+
+    const url = btn.dataset.submitUrl;
+    const sesiId = btn.dataset.sesiId;
+
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content')
+        },
+        body: JSON.stringify({ sesi_id: sesiId })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        sudahSubmit = false;
+        if (btn) btn.disabled = false;
+    });
+};
 
 /* ================= TIMER ================= */
 if (timerEl) {
@@ -143,7 +153,7 @@ if (timerEl) {
             clearInterval(interval);
 
             document
-                .querySelectorAll('input, textarea, button')
+                .querySelectorAll('input, textarea')
                 .forEach(el => el.disabled = true);
 
             autoSubmitSection();
@@ -153,3 +163,5 @@ if (timerEl) {
     }, 1000);
 }
 </script>
+
+@endsection

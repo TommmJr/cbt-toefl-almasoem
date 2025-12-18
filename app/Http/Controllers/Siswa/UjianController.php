@@ -11,7 +11,6 @@ use App\Services\TokenUjianService;
 use App\Actions\Ujian\AutoSubmitSectionAction;
 use App\Enums\StatusUjian;
 
-
 class UjianController extends Controller
 {
     /**
@@ -45,15 +44,13 @@ class UjianController extends Controller
     public function aksesUjian(Request $request, TokenUjianService $tokenService)
     {
         $request->validate([
-            'kode_token' => 'required|string|size:6|uppercase',
+            'kode_token' => 'required|string|size:6',
         ]);
 
-       $siswa = auth()->user()->siswa;
-
+        $siswa = auth()->user()->siswa;
         if (! $siswa) {
-            abort(403, 'Data siswa tidak ditemukan. Hubungi admin.');
+            abort(403, 'Data siswa tidak ditemukan.');
         }
-
 
         $token = $tokenService->validasiTokenDenganCache(
             $request->kode_token,
@@ -70,7 +67,7 @@ class UjianController extends Controller
     }
 
     /**
-     * HALAMAN PENGERJAAN (INTI CBT)
+     * HALAMAN PENGERJAAN CBT
      */
     public function show($sesiId, AutoSubmitSectionAction $autoSubmit)
     {
@@ -80,17 +77,19 @@ class UjianController extends Controller
         $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
         $sesi->pastikanBelumSelesai();
 
+        // AUTO SUBMIT (khusus kalau waktu HABIS)
         $autoSubmit->handle($sesi);
 
         $section = $sesi->sectionAktif();
 
+        // Kalau semua section selesai
         if (! $section && $sesi->semuaSectionSelesai()) {
             $sesi->update([
                 'status' => StatusUjian::SELESAI,
                 'waktu_selesai' => now(),
             ]);
 
-        return redirect()->route('siswa.hasil', $sesi->id);
+            return redirect()->route('siswa.hasil', $sesi->id);
         }
 
         if (! $sesi->section_mulai_at) {
@@ -106,43 +105,36 @@ class UjianController extends Controller
         ]);
     }
 
-
     /**
-     * SUBMIT SECTION MANUAL
+     * SUBMIT SECTION (MANUAL VIA BUTTON)
      */
     public function submitSection(Request $request)
     {
-    $request->validate([
-        'sesi_id' => 'required|exists:sesi_ujians,id',
-    ]);
+        $request->validate([
+            'sesi_id' => 'required|exists:sesi_ujians,id',
+        ]);
 
-    $sesi = SesiUjian::with('ujian.sections')
-        ->findOrFail($request->sesi_id);
+        $sesi = SesiUjian::findOrFail($request->sesi_id);
+        $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
 
-    $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
+        // ⬇️ INI KUNCI UTAMA
+        app(AutoSubmitSectionAction::class)->submit($sesi);
 
-    app(AutoSubmitSectionAction::class)->submit($sesi);
+        if ($sesi->fresh()->status === StatusUjian::SELESAI) {
+            return response()->json([
+                'redirect' => route('siswa.hasil', $sesi->id),
+            ]);
+        }
 
-    $sesi->refresh();
-
-    if ($sesi->masihAdaSection()) {
         return response()->json([
-    'status' => 'finished',
-    'redirect' => route('siswa.hasil', $sesi->id),
-]);
-
-    }
-
-    return response()->json([
-        'redirect' => route('siswa.hasil', $sesi->id),
-    ]);
+            'redirect' => route('siswa.ujian.mulai', $sesi->id),
+        ]);
     }
 
 
-
-/**
- * SIMPAN JAWABAN REALTIME (AUTOSAVE)
- */
+    /**
+     * AUTOSAVE JAWABAN REALTIME
+     */
     public function simpanJawaban(
         Request $request,
         AutoSubmitSectionAction $autoSubmit
@@ -158,32 +150,24 @@ class UjianController extends Controller
 
         $sesi->pastikanBisaDiaksesOleh(auth()->user()->siswa->id);
 
-        // auto submit kalau waktu habis
+        // AUTO SUBMIT kalau waktu habis
         $autoSubmit->handle($sesi);
 
         if ($sesi->isSectionExpired()) {
-            return response()->json([
-                'status' => 'expired',
-                'locked' => true,
-            ], 403);
+            return response()->json(['locked' => true], 403);
         }
 
         $section = $sesi->sectionAktif();
-
-        $soal = $section?->soal()
-            ->where('id', $request->soal_id)
-            ->first();
+        $soal = $section?->soal()->where('id', $request->soal_id)->first();
 
         if (! $soal) {
-            return response()->json([
-                'status' => 'invalid_soal',
-            ], 403);
+            abort(403);
         }
 
         $data = [
             'sesi_ujian_id' => $sesi->id,
-            'soal_id'       => $soal->id,
-            'waktu_jawab'   => now(),
+            'soal_id' => $soal->id,
+            'waktu_jawab' => now(),
         ];
 
         if ($soal->isPilihanGanda()) {
@@ -192,32 +176,27 @@ class UjianController extends Controller
             $data['jawaban_essay'] = $request->jawaban;
         }
 
-        //  INI BARU SIMPAN
         $jawaban = Jawaban::updateOrCreate(
             [
                 'sesi_ujian_id' => $sesi->id,
-                'soal_id'       => $soal->id,
+                'soal_id' => $soal->id,
             ],
             $data
         );
 
         return response()->json([
-            'status'      => 'saved',
-            'jawaban_id'  => $jawaban->id,
-            'soal_id'     => $soal->id,
-            'jawaban'     => $request->jawaban,
+            'status' => 'saved',
+            'jawaban_id' => $jawaban->id,
         ]);
     }
 
     /**
      * HASIL UJIAN
      */
-        public function hasil($sesiId)
+    public function hasil($sesiId)
     {
-        $sesi = SesiUjian::with([
-            'ujian.sections',
-            'jawaban.soal',
-        ])->findOrFail($sesiId);
+        $sesi = SesiUjian::with(['ujian.sections', 'jawaban.soal'])
+            ->findOrFail($sesiId);
 
         $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
 
@@ -228,9 +207,6 @@ class UjianController extends Controller
         return view('siswa.ujian.hasil', [
             'sesi' => $sesi,
             'totalSkor' => $sesi->jawaban->sum('skor'),
-            'jawabanPerSection' => $sesi->jawaban
-                ->groupBy(fn ($j) => $j->soal->ujian_section_id),
         ]);
-}
-
+    }
 }

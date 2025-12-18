@@ -6,8 +6,8 @@ namespace App\Models;
 
 use App\Enums\StatusUjian;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -52,11 +52,11 @@ class SesiUjian extends Model
         return $this->hasMany(Jawaban::class);
     }
 
-    /* ================= ACCESS CONTROL ================= */
+    /* ================= ACCESS ================= */
 
     public function pastikanMilikSiswa(int $siswaId): void
     {
-        if ($this->siswa_id !== $siswaId) {
+        if ((int) $this->siswa_id !== (int) $siswaId) {
             abort(403, 'Bukan pemilik sesi');
         }
     }
@@ -64,42 +64,41 @@ class SesiUjian extends Model
     public function pastikanBelumSelesai(): void
     {
         if ($this->status === StatusUjian::SELESAI) {
-            abort(403, 'UJIAN SUDAH SELESAI / TERKUNCI');
+            abort(403, 'UJIAN SUDAH SELESAI');
+        }
+    }
+
+    public function pastikanBisaDiaksesOleh(int $siswaId): void
+    {
+        if ((int) $this->siswa_id !== (int) $siswaId) {
+            throw new AccessDeniedHttpException('Bukan sesi anda');
         }
     }
 
     /* ================= SECTION FLOW ================= */
 
-   public function sectionAktif()
-{
-    return $this->ujian
-        ->sections()
-        ->orderBy('urutan')
-        ->skip($this->current_section_index)
-        ->first();
-}
-
-    public function masihAdaSection(): bool
-{
-    $totalSection = $this->ujian->sections->count();
-
-    return ($this->current_section_index + 1) < $totalSection;
-}
-
+    public function sectionAktif()
+    {
+        return $this->ujian
+            ->sections()
+            ->orderBy('urutan')
+            ->skip((int) $this->current_section_index)
+            ->first();
+    }
 
     public function lanjutKeSectionBerikutnya(): void
-{
-    $this->increment('current_section_index');
-    $this->update(['section_mulai_at' => now()]);
-}
+    {
+        $this->update([
+            'current_section_index' => (int) $this->current_section_index + 1,
+            'section_mulai_at' => now(),
+        ]);
+    }
 
-
-   public function semuaSectionSelesai(): bool
-{
-    return $this->current_section_index >= $this->ujian->sections()->count();
-}
-
-    
+    public function semuaSectionSelesai(): bool
+    {
+        $total = (int) $this->ujian->sections()->count();
+        return (int) $this->current_section_index >= $total;
+    }
 
     /* ================= TIMER ================= */
 
@@ -107,40 +106,27 @@ class SesiUjian extends Model
     {
         return $this->section_mulai_at
             ->copy()
-            ->addMinutes($this->sectionAktif()->durasi_menit);
+            ->addMinutes((int) $this->sectionAktif()->durasi_menit);
     }
 
     public function isSectionExpired(): bool
-{
-    if (! $this->section_mulai_at || ! $this->sectionAktif()) {
-        return true;
-    }
-
-    return now()->greaterThanOrEqualTo($this->sectionEndTime());
-}
-
-   public function sisaWaktuSection(): int
-{
-    if (! $this->section_mulai_at || ! $this->sectionAktif()) {
-        return 0;
-    }
-
-    $sisa = now()->diffInSeconds(
-        $this->sectionEndTime(),
-        false
-    );
-
-    return max(0, (int) floor($sisa));
-}
-
-
-
-
-    public function pastikanBisaDiaksesOleh(int $siswaId): void
     {
-        if ((int) $this->siswa_id !== (int) $siswaId) {
-            throw new AccessDeniedHttpException('Sesi ujian bukan milik siswa ini');
+        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+            return true;
         }
+
+        return now()->greaterThanOrEqualTo($this->sectionEndTime());
     }
 
+    public function sisaWaktuSection(): int
+    {
+        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+            return 0;
+        }
+
+        return max(
+            0,
+            (int) now()->diffInSeconds($this->sectionEndTime(), false)
+        );
+    }
 }

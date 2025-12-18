@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 class TokenUjian extends Model
@@ -52,11 +51,6 @@ class TokenUjian extends Model
         return $this->belongsTo(Ujian::class);
     }
 
-    public function pembuatToken(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'dibuat_oleh');
-    }
-
     public function siswaYangMemakai(): BelongsToMany
     {
         return $this->belongsToMany(Siswa::class, 'token_ujian_usage')
@@ -69,12 +63,8 @@ class TokenUjian extends Model
         return $this->hasMany(TokenUjianUsage::class);
     }
 
-    /* ================= QUERY SCOPE ================= */
+    /* ================= SCOPE ================= */
 
-    /**
-     * Token aktif, masih berlaku, dan kuota belum habis
-     * Dipakai di TokenUjianService (cache layer)
-     */
     public function scopeAktifDanValid($query)
     {
         return $query
@@ -84,14 +74,9 @@ class TokenUjian extends Model
             ->whereRaw('COALESCE(jumlah_terpakai, 0) < kuota_pemakaian');
     }
 
-    /* ================= VALIDATION ================= */
+    /* ================= VALIDASI TOKEN (HANYA UNTUK SESI BARU) ================= */
 
-    /**
-     * PURE validation.
-     * Tidak mengurus sesi ujian.
-     * Tidak return apa pun.
-     */
-    public function validasiToken(Siswa $siswa): void
+    private function validasiUntukSesiBaru(Siswa $siswa): void
     {
         if (! $this->is_active) {
             throw new \Exception('Token sudah dinonaktifkan');
@@ -105,11 +90,9 @@ class TokenUjian extends Model
             throw new \Exception('Token sudah kadaluarsa');
         }
 
-        $currentToken = self::where('id', $this->id)
-            ->lockForUpdate()
-            ->first();
+        $token = self::where('id', $this->id)->lockForUpdate()->first();
 
-        if ($currentToken->jumlah_terpakai >= $currentToken->kuota_pemakaian) {
+        if ($token->jumlah_terpakai >= $token->kuota_pemakaian) {
             throw new \Exception('Kuota token sudah habis');
         }
 
@@ -126,9 +109,9 @@ class TokenUjian extends Model
     /* ================= CORE ================= */
 
     /**
-     * Idempotent.
-     * Resume kalau ada sesi aktif.
-     * Buat baru kalau tidak ada.
+     * IDPOTENT
+     * - Kalau sesi masih ada → resume
+     * - Kalau tidak ada → buat baru
      */
     public function gunakanToken(
         Siswa $siswa,
@@ -137,7 +120,7 @@ class TokenUjian extends Model
     ): SesiUjian {
         return DB::transaction(function () use ($siswa, $ipAddress, $userAgent) {
 
-            // 1 CEK SESI AKTIF (RESUME)
+            // 1️⃣ RESUME SESI AKTIF
             $sesiAktif = SesiUjian::where('ujian_id', $this->ujian_id)
                 ->where('siswa_id', $siswa->id)
                 ->whereIn('status', [
@@ -151,15 +134,15 @@ class TokenUjian extends Model
                 return $sesiAktif;
             }
 
-            // 2VALIDASI TOKEN (BARU DIPAKAI)
-            $this->validasiToken($siswa);
+            // 2️⃣ VALIDASI TOKEN (KHUSUS SESI BARU)
+            $this->validasiUntukSesiBaru($siswa);
 
-            // 3 AMANKAN TOKEN
-            $this->lockForUpdate()->increment('jumlah_terpakai');
+            // 3️⃣ AMANKAN TOKEN
+            $this->increment('jumlah_terpakai');
             $this->update(['last_used_at' => now()]);
 
-            // 4 BUAT SESI BARU
-            $sesiUjian = SesiUjian::create([
+            // 4️⃣ BUAT SESI BARU
+            $sesi = SesiUjian::create([
                 'ujian_id'              => $this->ujian_id,
                 'siswa_id'              => $siswa->id,
                 'status'                => StatusUjian::SEDANG_MENGERJAKAN,
@@ -173,13 +156,13 @@ class TokenUjian extends Model
             DB::table('token_ujian_usage')->insert([
                 'token_ujian_id' => $this->id,
                 'siswa_id'       => $siswa->id,
-                'sesi_ujian_id'  => $sesiUjian->id,
+                'sesi_ujian_id'  => $sesi->id,
                 'ip_address'     => $ipAddress,
                 'user_agent'     => $userAgent,
                 'digunakan_pada' => now(),
             ]);
 
-            return $sesiUjian;
+            return $sesi;
         });
     }
 }
