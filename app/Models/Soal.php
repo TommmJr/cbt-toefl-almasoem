@@ -19,50 +19,33 @@ class Soal extends Model
      * Nama tabel
      */
     protected $table = 'soal';
-
     /**
      * Mass assignable attributes
      */
     protected $fillable = [
-        'ujian_id',
-        'tipe_soal',
+        'ujian_section_id',
         'nomor_urut',
         'pertanyaan',
+        'tipe_soal',
+
+        'opsi_jawaban',
+        'jawaban_benar',
+
+        'bobot_nilai',
+        'min_kata',
+        'max_kata',
         'audio_path',
         'audio_duration',
         'passage',
-        'opsi_jawaban',
-        'jawaban_benar',
-        'rubrik_penilaian',
-        'min_kata',
-        'max_kata',
-        'bobot_nilai',
     ];
 
-    /**
-     * Cast attributes
-     */
-    protected function casts(): array
-    {
-        return [
-            'tipe_soal' => TipeSoal::class,
-            'nomor_urut' => 'integer',
-            'audio_duration' => 'integer',
-            'opsi_jawaban' => 'array', // JSON ke array
-            'rubrik_penilaian' => 'array',
-            'min_kata' => 'integer',
-            'max_kata' => 'integer',
-            'bobot_nilai' => 'integer',
-        ];
-    }
 
-    /**
-     * Relasi ke ujian (many:1)
-     */
-    public function ujian(): BelongsTo
-    {
-        return $this->belongsTo(Ujian::class);
-    }
+        protected function casts(): array 
+        {
+            return [
+             'opsi_jawaban' => 'array',
+            ];
+        }
 
     /**
      * Relasi ke jawaban siswa (1:many)
@@ -93,16 +76,18 @@ class Soal extends Model
      */
     public function isPilihanGanda(): bool
     {
-        return !empty($this->opsi_jawaban) && !empty($this->jawaban_benar);
+        return in_array($this->tipe_soal, ['listening', 'reading'], true);
     }
+
 
     /**
      * : Cek apakah soal adalah essay/writing
      */
     public function isEssay(): bool
     {
-        return $this->tipe_soal === TipeSoal::WRITING;
+        return $this->tipe_soal === 'writing';
     }
+
 
     /**
      * : Cek apakah soal punya audio
@@ -166,14 +151,6 @@ class Soal extends Model
 public function ujianSection(): BelongsTo
 {
     return $this->belongsTo(UjianSection::class);
-}
-
-/**
- * Helper: Ambil tipe soal dari section (backward compatibility)
- */
-public function getTipeSoalAttribute(): TipeSoal
-{
-    return $this->ujianSection->tipe_section;
 }
 
 }

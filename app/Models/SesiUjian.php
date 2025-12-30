@@ -4,50 +4,38 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\TipeSoal;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\StatusUjian;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class SesiUjian extends Model
 {
     use HasFactory;
 
-    protected $table = 'sesi_ujians';
-    
-    protected $guarded = ['id'];
-    
     protected $fillable = [
         'ujian_id',
-        'tipe_section',
-        'urutan',
-        'durasi_menit',
-        'jumlah_soal_target',
-        'bobot_nilai',
-        'instruksi_custom',
-        'is_active',
         'siswa_id',
         'status',
+        'current_section_index',
+        'section_mulai_at',
+        'waktu_mulai',
+        'waktu_selesai',
         'ip_address',
         'user_agent',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'tipe_section' => TipeSoal::class,
-            'urutan' => 'integer',
-            'durasi_menit' => 'integer',
-            'jumlah_soal_target' => 'integer',
-            'bobot_nilai' => 'decimal:2',
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'status' => StatusUjian::class,
+        'waktu_mulai' => 'datetime',
+        'waktu_selesai' => 'datetime',
+        'section_mulai_at' => 'datetime',
+    ];
 
-    /**
-     * Relasi ke ujian
-     */
+    /* ================= RELATIONS ================= */
 
     public function siswa(): BelongsTo
     {
@@ -59,72 +47,86 @@ class SesiUjian extends Model
         return $this->belongsTo(Ujian::class);
     }
 
-    /**
-     * Relasi ke soal-soal dalam section ini
-     */
-    public function soal(): HasMany
+    public function jawaban(): HasMany
     {
-        return $this->hasMany(Soal::class)->orderBy('nomor_urut');
+        return $this->hasMany(Jawaban::class);
     }
 
-    /**
-     * Scope: Urutkan berdasarkan urutan section
-     */
-    public function scopeOrdered($query)
+    /* ================= ACCESS ================= */
+
+    public function pastikanMilikSiswa(int $siswaId): void
     {
-        return $query->orderBy('urutan');
+        if ((int) $this->siswa_id !== (int) $siswaId) {
+            abort(403, 'Bukan pemilik sesi');
+        }
     }
 
-    /**
-     * Scope: Section yang aktif
-     */
-    public function scopeAktif($query)
+    public function pastikanBelumSelesai(): void
     {
-        return $query->where('is_active', true);
+        if ($this->status === StatusUjian::SELESAI) {
+            abort(403, 'UJIAN SUDAH SELESAI');
+        }
     }
 
-    /**
-     * Helper: Ambil config default dari Enum
-     */
-    public function getConfigDefaultAttribute(): array
+    public function pastikanBisaDiaksesOleh(int $siswaId): void
     {
-        return $this->tipe_section->config();
+        if ((int) $this->siswa_id !== (int) $siswaId) {
+            throw new AccessDeniedHttpException('Bukan sesi anda');
+        }
     }
 
-    /**
-     * Helper: Ambil label section
-     */
-    public function getLabelAttribute(): string
+    /* ================= SECTION FLOW ================= */
+
+    public function sectionAktif()
     {
-        return $this->tipe_section->label();
+        return $this->ujian
+            ->sections()
+            ->orderBy('urutan')
+            ->skip((int) $this->current_section_index)
+            ->first();
     }
 
-    /**
-     * Helper: Ambil icon section
-     */
-    public function getIconAttribute(): string
+    public function lanjutKeSectionBerikutnya(): void
     {
-        return $this->tipe_section->icon();
+        $this->update([
+            'current_section_index' => (int) $this->current_section_index + 1,
+            'section_mulai_at' => now(),
+        ]);
     }
 
-    /**
-     * Helper: Cek apakah jumlah soal sudah sesuai target
-     */
-    public function isSoalLengkap(): bool
+    public function semuaSectionSelesai(): bool
     {
-        return $this->soal()->count() >= $this->jumlah_soal_target;
+        $total = (int) $this->ujian->sections()->count();
+        return (int) $this->current_section_index >= $total;
     }
 
-    /**
-     * Helper: Hitung progress input soal (%)
-     */
-    public function getProgressSoalAttribute(): int
+    /* ================= TIMER ================= */
+
+    public function sectionEndTime(): Carbon
     {
-        if ($this->jumlah_soal_target === 0) {
+        return $this->section_mulai_at
+            ->copy()
+            ->addMinutes((int) $this->sectionAktif()->durasi_menit);
+    }
+
+    public function isSectionExpired(): bool
+    {
+        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
+            return true;
+        }
+
+        return now()->greaterThanOrEqualTo($this->sectionEndTime());
+    }
+
+    public function sisaWaktuSection(): int
+    {
+        if (! $this->section_mulai_at || ! $this->sectionAktif()) {
             return 0;
         }
 
-        $jumlahSoal = $this->soal()->count();
-        return (int) min(100, ($jumlahSoal / $this->jumlah_soal_target) * 100);
+        return max(
+            0,
+            (int) now()->diffInSeconds($this->sectionEndTime(), false)
+        );
     }
 }

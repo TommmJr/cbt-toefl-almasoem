@@ -12,14 +12,8 @@ class Jawaban extends Model
 {
     use HasFactory;
 
-    /**
-     * Nama tabel
-     */
     protected $table = 'jawaban';
 
-    /**
-     * Mass assignable attributes
-     */
     protected $fillable = [
         'sesi_ujian_id',
         'soal_id',
@@ -34,109 +28,107 @@ class Jawaban extends Model
         'teacher_score',
         'teacher_feedback',
         'waktu_jawab',
+        'is_locked',
     ];
 
-    /**
-     * Cast attributes
-     */
     protected function casts(): array
     {
         return [
             'is_benar' => 'boolean',
             'skor' => 'decimal:2',
             'ai_score' => 'decimal:2',
-            'ai_feedback' => 'array', // JSON ke array
+            'ai_feedback' => 'array',
             'is_reviewed_by_teacher' => 'boolean',
             'teacher_score' => 'decimal:2',
             'waktu_jawab' => 'datetime',
             'jumlah_kata' => 'integer',
+            'is_locked' => 'boolean',
         ];
     }
 
-    /**
-     * Relasi ke sesi ujian (many:1)
-     */
+    /* ================= RELATIONS ================= */
+
     public function sesiUjian(): BelongsTo
     {
         return $this->belongsTo(SesiUjian::class);
     }
 
-    /**
-     * Relasi ke soal (many:1)
-     */
     public function soal(): BelongsTo
     {
         return $this->belongsTo(Soal::class);
     }
 
-    /**
-     * Scope: Filter jawaban yang benar
-     */
+    /* ================= SCOPES ================= */
+
     public function scopeBenar($query)
     {
         return $query->where('is_benar', true);
     }
 
-    /**
-     * Scope: Filter jawaban yang salah
-     */
     public function scopeSalah($query)
     {
         return $query->where('is_benar', false);
     }
 
-    /**
-     * Scope: Filter jawaban essay yang belum direview guru
-     */
     public function scopeBelumDireview($query)
     {
-        return $query->whereNotNull('ai_score')
-                     ->where('is_reviewed_by_teacher', false);
+        return $query
+            ->whereNotNull('ai_score')
+            ->where('is_reviewed_by_teacher', false);
     }
 
+    /* ================= CORE SCORING (FASE 2) ================= */
+
     /**
-     * : Cek jawaban pilihan ganda otomatis
+     * Auto nilai pilihan ganda
+     * - PG → auto-score
+     * - Essay → skip (aman)
      */
-    public function cekJawabanPilihanGanda(): void
+    public function nilaiPilihanGanda(): void
     {
-        if ($this->soal->isPilihanGanda()) {
-            $isBenar = strtoupper($this->jawaban_pilihan) === strtoupper($this->soal->jawaban_benar);
-            
+        $soal = $this->soal;
+
+        // Soal tidak valid / essay / tidak punya kunci
+        if (! $soal || ! $soal->jawaban_benar) {
             $this->update([
-                'is_benar' => $isBenar,
-                'skor' => $isBenar ? $this->soal->bobot_nilai : 0,
+                'is_benar' => null,
+                'skor' => 0,
             ]);
+            return;
         }
+
+        $benar = strtoupper((string) $this->jawaban_pilihan)
+              === strtoupper((string) $soal->jawaban_benar);
+
+        $this->update([
+            'is_benar' => $benar,
+            'skor' => $benar ? $soal->bobot_nilai : 0,
+        ]);
     }
 
-    /**
-     * : Set skor dari AI grading
-     */
+    /* ================= AI & MANUAL SCORING ================= */
+
     public function setSkorAI(float $score, array $feedback): void
     {
         $this->update([
             'ai_score' => $score,
             'ai_feedback' => $feedback,
-            'skor' => $score, // Default gunakan skor AI dulu
+            'skor' => $score,
         ]);
     }
 
-    /**
-     * : Override skor dengan penilaian manual guru
-     */
     public function setSkorGuru(float $score, string $feedback): void
     {
         $this->update([
             'teacher_score' => $score,
             'teacher_feedback' => $feedback,
-            'skor' => $score, // Override skor AI dengan skor guru
+            'skor' => $score,
             'is_reviewed_by_teacher' => true,
         ]);
     }
 
-    /**
-     * : Hitung jumlah kata dari essay
-     */
+    /* ================= ESSAY UTIL ================= */
+
     public function hitungJumlahKata(): void
     {
         if ($this->jawaban_essay) {
@@ -145,13 +137,10 @@ class Jawaban extends Model
         }
     }
 
-    /**
-     * : Validasi jumlah kata essay (min/max)
-     */
     public function isJumlahKataValid(): bool
     {
-        if (!$this->soal->min_kata && !$this->soal->max_kata) {
-            return true; // Tidak ada batasan
+        if (! $this->soal->min_kata && ! $this->soal->max_kata) {
+            return true;
         }
 
         $jumlah = $this->jumlah_kata ?? 0;

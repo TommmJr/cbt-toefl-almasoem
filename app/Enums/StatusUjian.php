@@ -6,13 +6,13 @@ namespace App\Enums;
 
 enum StatusUjian: string
 {
-    case BELUM_MULAI = 'belum_mulai';
+    case BELUM_MULAI        = 'belum_mulai';
     case SEDANG_MENGERJAKAN = 'sedang_mengerjakan';
-    case SELESAI = 'selesai';
-    case DISKUALIFIKASI = 'diskualifikasi';
+    case SELESAI            = 'selesai';
+    case DISKUALIFIKASI     = 'diskualifikasi';
 
     /**
-     * Ambil semua nilai enum
+     * Semua value enum (buat validasi / form / migration)
      */
     public static function values(): array
     {
@@ -20,33 +20,33 @@ enum StatusUjian: string
     }
 
     /**
-     * Label untuk display
+     * Label manusiawi (buat Blade / UI)
      */
     public function label(): string
     {
-        return match($this) {
-            self::BELUM_MULAI => 'Belum Mulai',
+        return match ($this) {
+            self::BELUM_MULAI        => 'Belum Mulai',
             self::SEDANG_MENGERJAKAN => 'Sedang Mengerjakan',
-            self::SELESAI => 'Selesai',
-            self::DISKUALIFIKASI => 'Diskualifikasi',
+            self::SELESAI            => 'Selesai',
+            self::DISKUALIFIKASI     => 'Diskualifikasi',
         };
     }
 
     /**
-     * Badge color untuk UI (Tailwind classes)
+     * Warna badge (Tailwind-ready)
      */
     public function badgeColor(): string
     {
-        return match($this) {
-            self::BELUM_MULAI => 'bg-gray-100 text-gray-800',
+        return match ($this) {
+            self::BELUM_MULAI        => 'bg-gray-100 text-gray-800',
             self::SEDANG_MENGERJAKAN => 'bg-blue-100 text-blue-800',
-            self::SELESAI => 'bg-green-100 text-green-800',
-            self::DISKUALIFIKASI => 'bg-red-100 text-red-800',
+            self::SELESAI            => 'bg-green-100 text-green-800',
+            self::DISKUALIFIKASI     => 'bg-red-100 text-red-800',
         };
     }
 
     /**
-     * Cek apakah siswa bisa lanjut mengerjakan
+     * Apakah siswa boleh lanjut mengerjakan
      */
     public function canContinue(): bool
     {
@@ -54,10 +54,13 @@ enum StatusUjian: string
     }
 
     /**
-     * Cek apakah ujian sudah selesai (final state)
+     * Apakah status final (tidak bisa diubah)
      */
     public function isFinished(): bool
     {
-        return in_array($this, [self::SELESAI, self::DISKUALIFIKASI]);
+        return in_array($this, [
+            self::SELESAI,
+            self::DISKUALIFIKASI,
+        ], true);
     }
 }

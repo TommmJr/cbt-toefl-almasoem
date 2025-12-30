@@ -8,28 +8,40 @@ use Illuminate\Support\Facades\Cache;
 class TokenUjianService
 {
     /**
-     * Validasi token dengan Redis cache (untuk 3000 users)
+     * Validasi token (cache-friendly, TANPA cek pemakaian siswa).
+     * Cek "pernah pakai" & resume SESI dilakukan di gunakanToken().
      */
     public function validasiTokenDenganCache(string $kodeToken, Siswa $siswa): TokenUjian
     {
-        // Cache key unik per kombinasi token + siswa
-        $cacheKey = "token_validation:{$kodeToken}:{$siswa->id}";
+        // Cache hanya berdasarkan KODE TOKEN
+        // Bukan per siswa, biar resume gak ke-block
+        $cacheKey = "token_valid:{$kodeToken}";
 
-        // Cek cache dulu (TTL 5 menit)
-        $cachedResult = Cache::remember($cacheKey, 300, function () use ($kodeToken) {
-            return TokenUjian::where('kode_token', $kodeToken)
-                ->with('ujian')
-                ->aktifDanValid()
-                ->first();
-        });
+        $token = Cache::remember(
+            $cacheKey,
+            now()->addMinutes(5),
+            function () use ($kodeToken) {
+                return TokenUjian::where('kode_token', $kodeToken)
+                    ->with('ujian')
+                    ->aktifDanValid()
+                    ->first();
+            }
+        );
 
-        if (!$cachedResult) {
+        if (! $token) {
             throw new \Exception('Token tidak valid atau sudah expired');
         }
 
-        // Validasi ulang dengan DB lock (race condition protection)
-        $cachedResult->validasiToken($siswa);
+        /**
+         * PENTING:
+         * - JANGAN cek "sudah pernah dipakai siswa" di sini
+         * - Logic itu ada di TokenUjian::gunakanToken()
+         * - Biar:
+         *   - input ulang token → RESUME
+         *   - refresh → RESUME
+         *   - sesi selesai → BARU DITOLAK
+         */
 
-        return $cachedResult;
+        return $token;
     }
 }

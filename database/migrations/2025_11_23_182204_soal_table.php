@@ -15,7 +15,7 @@ return new class extends Migration
     {
         Schema::create('soal', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('ujian_id')->constrained('ujian')->cascadeOnDelete()->comment('FK ke tabel ujian');
+            $table->foreignId('ujian_section_id')->constrained('ujian_sections')->cascadeOnDelete()->comment('FK ke tabel ujian_section');
             $table->enum('tipe_soal', ['listening', 'reading', 'writing'])->comment('Tipe soal TOEFL');
             $table->integer('nomor_urut')->unsigned()->comment('Nomor urut soal dalam ujian');
             $table->text('pertanyaan')->comment('Isi pertanyaan/soal');
@@ -41,8 +41,9 @@ return new class extends Migration
             $table->softDeletes();
 
             // Index untuk query optimization
-            $table->index(['ujian_id', 'tipe_soal', 'nomor_urut']);
-            $table->index(['ujian_id', 'nomor_urut']);
+            $table->index(['ujian_section_id', 'tipe_soal', 'nomor_urut']);
+            $table->index(['ujian_section_id', 'nomor_urut']);
+
         });
     }
 

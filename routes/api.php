@@ -1,23 +1,39 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TokenUjianController;
+use App\Http\Controllers\Admin\UjianController as AdminUjianController;
+use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
 
-// 1. Route Login (PUBLIC - Gak butuh token)
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/login', [AuthController::class, 'login']);
 
-// 2. Route Protected (Butuh Token Login)
+/*
+|--------------------------------------------------------------------------
+| Route Test / Development
+|--------------------------------------------------------------------------
+*/
+
+Route::post('/test/ujian/section', [AdminUjianController::class, 'storeSection']);
+
+/*
+|--------------------------------------------------------------------------
+| Protected Routes (Sanctum)
+|--------------------------------------------------------------------------
+*/
+
 Route::middleware(['auth:sanctum'])->group(function () {
-    
-    // Auth Stuff
+
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    // Validasi Token Ujian (Siswa)
     Route::post('/token/validate', [TokenUjianController::class, 'validateToken']);
-    
-    // Generate Token (Guru)
     Route::post('/token/generate', [TokenUjianController::class, 'generate']);
+
 });
