@@ -225,7 +225,13 @@ resources/
       secondary-button.blade.php
       text-input.blade.php
     guru/
+      ujian/
+        create.blade.php
+        index.blade.php
+        show.blade.php
+        soal.create.blade.php
       dashboard.blade.php
+      index.blade.php
     layouts/
       app.blade.php
       guest.blade.php
@@ -1029,34 +1035,6 @@ class VerifyEmailController extends Controller
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
     }
-}
-</file>
-
-<file path="app/Http/Controllers/Guru/DashboardController.php">
-<?php
-
-namespace App\Http\Controllers\Guru;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-class DashboardController extends Controller
-{
-    //
-}
-</file>
-
-<file path="app/Http/Controllers/Guru/ManajemenUjianController.php">
-<?php
-
-namespace App\Http\Controllers\Guru;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-
-class ManajemenUjianController extends Controller
-{
-    //
 }
 </file>
 
@@ -3765,90 +3743,6 @@ return new class extends Migration
 };
 </file>
 
-<file path="database/seeders/DummyUjianSeeder.php">
-<?php
-
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
-use App\Models\Ujian;
-use App\Models\UjianSection;
-use App\Enums\TipeUjian;
-use Illuminate\Support\Facades\DB;
-
-class DummyUjianSeeder extends Seeder
-{
-    public function run(): void
-    {
-        $guruId = DB::table('guru')
-            ->whereNull('deleted_at')
-            ->value('id');
-
-        if (! $guruId) {
-            throw new \Exception('Seeder error: Data guru tidak ditemukan di tabel guru.');
-        }
-
-        $ujian = Ujian::firstOrCreate(
-            ['kode_ujian' => 'DUMMY-TOEFL'],
-            [
-                'guru_id' => $guruId,
-                'judul' => 'Simulasi TOEFL ITP',
-                'deskripsi' => 'Ujian dummy untuk testing alur siswa',
-                'tipe_ujian' => TipeUjian::PRACTICE,
-                'durasi_menit' => 115,
-                'waktu_mulai' => now()->subDay(),
-                'waktu_selesai' => now()->addDay(),
-                'is_published' => true,
-            ]
-        );
-
-        $sections = [
-            ['judul_section' => 'Listening',  'tipe_section' => 'listening',  'urutan' => 1, 'durasi_menit' => 35],
-            ['judul_section' => 'Structure',  'tipe_section' => 'structure',  'urutan' => 2, 'durasi_menit' => 25],
-            ['judul_section' => 'Reading',    'tipe_section' => 'reading',    'urutan' => 3, 'durasi_menit' => 55],
-        ];
-
-        foreach ($sections as $s) {
-            UjianSection::firstOrCreate(
-                ['ujian_id' => $ujian->id, 'urutan' => $s['urutan']],
-                array_merge($s, ['ujian_id' => $ujian->id])
-            );
-        }
-    }
-}
-</file>
-
-<file path="database/seeders/GuruSeeder.php">
-<?php
-
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
-use App\Models\Guru;
-use App\Models\User;
-
-class GuruSeeder extends Seeder
-{
-    public function run(): void
-    {
-        $userGuru = User::where('role', 'guru')->first();
-
-        if (! $userGuru) {
-            throw new \Exception('Seeder error: User guru belum ada.');
-        }
-
-        Guru::firstOrCreate(
-            ['user_id' => $userGuru->id],
-            [
-                'nip' => '194468600943',
-                'nama_lengkap' => 'Joana Olson',
-                'mata_pelajaran' => 'Bahasa Inggris',
-            ]
-        );
-    }
-}
-</file>
-
 <file path="database/seeders/KategoriSoalSeeder.php">
 <?php
 
@@ -4507,115 +4401,6 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 </button>
 </file>
 
-<file path="resources/views/components/dashboard-sidebar.blade.php">
-@props(['active' => 'dashboard', 'role' => 'siswa'])
-
-<div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50">
-
-    {{-- Menu Icon --}}
-    <div class="text-white mb-4 cursor-pointer">
-        <i data-lucide="menu" size="28"></i>
-    </div>
-
-    {{-- Navigation Items (Dynamic based on Role) --}}
-    @if($role === 'admin')
-        {{-- Admin Navigation --}}
-        <a href="{{ route('admin.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="layout-dashboard" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('admin.ujian.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'ujian' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="clipboard-list" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('admin.stats') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-
-    @elseif($role === 'guru')
-        {{-- Guru Navigation --}}
-        <a href="{{ route('guru.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="home" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('guru.soal.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'soal' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="file-text" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('guru.stats') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-
-    @else
-        {{-- Siswa Navigation --}}
-        <a href="{{ route('siswa.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'home' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="home" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('siswa.ujian.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'test' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="edit-3" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('siswa.nilai') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'analysis' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-    @endif
-
-    {{-- Bottom Section (Settings + User) --}}
-    <div class="mt-auto flex flex-col items-center gap-6 mb-4">
-
-        {{-- Settings Icon --}}
-        <i data-lucide="settings" size="28" class="text-white/70 hover:text-white cursor-pointer transition"></i>
-
-        {{-- User Dropdown dengan Alpine.js --}}
-        <div class="relative" x-data="{ open: false }">
-            <div @click="open = !open" 
-                 class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-300 transition">
-                <i data-lucide="user" size="22" class="text-purple-700"></i>
-            </div>
-
-            {{-- Dropdown Menu --}}
-            <div x-show="open" 
-                 @click.away="open = false"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-90"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-90"
-                 class="absolute left-[88px] bottom-0 bg-white shadow-lg rounded-xl p-3 border border-gray-200 w-40"
-                 style="display: none;">
-                
-                <div class="text-xs text-gray-500 px-3 pb-2 border-b mb-2">
-                    <div class="font-semibold text-gray-700">{{ auth()->user()->name }}</div>
-                    <div class="text-[10px]">{{ ucfirst(auth()->user()->role) }}</div>
-                </div>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" 
-                            class="w-full text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition text-center">
-                        <i data-lucide="log-out" size="16" class="inline mr-1"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-
-    </div>
-
-</div>
-</file>
-
 <file path="resources/views/components/dropdown-link.blade.php">
 <a {{ $attributes->merge(['class' => 'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out']) }}>{{ $slot }}</a>
 </file>
@@ -4803,6 +4588,565 @@ $classes = ($active ?? false)
 @props(['disabled' => false])
 
 <input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm']) }}>
+</file>
+
+<file path="resources/views/guru/ujian/create.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buat Ujian Baru</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8 transition-all duration-300">
+            
+            {{-- Header --}}
+            <div class="mb-6 flex items-center gap-3">
+                <a href="{{ route('guru.ujian.index') }}" class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 transition">
+                    <i data-lucide="arrow-left" size="20"></i>
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Buat Ujian Baru</h1>
+            </div>
+
+            {{-- Form Card --}}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-3xl">
+                
+                <form action="{{ route('guru.ujian.store') }}" method="POST">
+                    @csrf
+
+                    {{-- 1. Judul Ujian --}}
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Judul Ujian</label>
+                        <input type="text" name="judul" value="{{ old('judul') }}" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            placeholder="Contoh: Penilaian Harian Bahasa Inggris Chapter 1" required>
+                        @error('judul')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- 2. Deskripsi (Opsional) --}}
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Deskripsi (Opsional)</label>
+                        <textarea name="deskripsi" rows="3" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            placeholder="Instruksi pengerjaan...">{{ old('deskripsi') }}</textarea>
+                    </div>
+
+                    {{-- Grid Layout untuk Waktu --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        
+                        {{-- 3. Waktu Mulai --}}
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Mulai</label>
+                            <input type="datetime-local" name="waktu_mulai" value="{{ old('waktu_mulai') }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                            @error('waktu_mulai')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- 4. Waktu Selesai --}}
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Selesai</label>
+                            <input type="datetime-local" name="waktu_selesai" value="{{ old('waktu_selesai') }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                            @error('waktu_selesai')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    {{-- 5. Durasi --}}
+                    <div class="mb-8">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Durasi Pengerjaan (Menit)</label>
+                        <input type="number" name="durasi_menit" value="{{ old('durasi_menit', 60) }}" min="1"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                        <p class="mt-1 text-xs text-gray-500">Berapa lama siswa boleh mengerjakan soal setelah menekan tombol mulai.</p>
+                        @error('durasi_menit')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Tombol Submit --}}
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ route('guru.ujian.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                            Batal
+                        </a>
+                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition shadow-md">
+                            Simpan Ujian
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/index.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen Ujian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            {{-- Header --}}
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Daftar Ujian Anda</h1>
+                <a href="{{ route('guru.ujian.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                    <i data-lucide="plus"></i> Tambah Ujian
+                </a>
+            </div>
+
+            {{-- Alert Success --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Table --}}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3">Judul</th>
+                            <th class="px-6 py-3">Kode</th>
+                            <th class="px-6 py-3">Waktu</th>
+                            <th class="px-6 py-3">Durasi</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($ujian as $item)
+                            <tr class="bg-white hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 font-medium text-gray-900">
+                                    <a href="{{ route('guru.ujian.show', $item->id) }}" class="hover:text-blue-600 hover:underline">
+                                        {{ $item->judul }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4 font-mono">
+                                    <span class="bg-gray-100 px-2 py-1 rounded text-gray-600 border border-gray-200">{{ $item->kode_ujian }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $item->waktu_mulai->format('d M Y, H:i') }}
+                                </td>
+                                <td class="px-6 py-4">{{ $item->durasi_menit }} Menit</td>
+                                <td class="px-6 py-4">
+                                    @if($item->is_published)
+                                        <span class="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Published</span>
+                                    @else
+                                        <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Draft</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="{{ route('guru.ujian.show', $item->id) }}" class="text-blue-600 hover:text-blue-900 font-medium mr-3">Kelola</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-400 bg-gray-50">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i data-lucide="clipboard-list" size="40" class="mb-2 opacity-50"></i>
+                                        <p>Belum ada ujian. Klik tombol Tambah Ujian di atas!</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $ujian->links() }}
+            </div>
+        </main>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/show.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kelola Ujian - {{ $ujian->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            
+            {{-- Header --}}
+            <div class="mb-6">
+                <a href="{{ route('guru.ujian.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2 transition">
+                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Daftar
+                </a>
+                
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ $ujian->judul }}</h1>
+                        <div class="flex items-center gap-3 mt-2 text-sm">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono font-bold">{{ $ujian->kode_ujian }}</span>
+                            <span class="text-gray-500 flex items-center gap-1">
+                                <i data-lucide="clock" size="14"></i> Total: {{ $ujian->durasi_menit }} Menit
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {{-- Tombol Header --}}
+                    <div class="flex gap-2">
+                        @if(!$ujian->is_published)
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+                                <i data-lucide="upload-cloud" size="18"></i> Publish
+                            </button>
+                        @else
+                            <span class="px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center gap-2 border border-green-200">
+                                <i data-lucide="check-circle" size="18"></i> Published
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Pesan Sukses --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- LOGIC: Cek apakah Section sudah ada? --}}
+            @if($ujian->sections->count() > 0)
+                
+                {{-- KONTEN UTAMA: Jika Section Ada --}}
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Daftar Section</h2>
+                        <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus"></i> Tambah Section
+                        </button>
+                    </div>
+
+                    {{-- Looping Section --}}
+                    @foreach($ujian->sections as $section)
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg">{{ $section->judul }}</h3>
+                                    <p class="text-xs text-gray-500">Durasi: {{ $section->durasi_menit }} Menit • {{ $section->soal->count() }} Soal</p>
+                                </div>
+                                <div class="flex gap-2">
+                                   <a href="{{ route('guru.ujian.soal.create', $section->id) }}" 
+                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
+                                        <i data-lucide="plus-circle" size="14"></i> Tambah Soal
+                                    </a>
+                                    <button class="text-gray-400 hover:text-red-600 px-2">
+                                        <i data-lucide="trash-2" size="18"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {{-- Preview Soal (Kosong dulu) --}}
+                            <div class="p-6 text-center text-gray-400 text-sm italic">
+                                Belum ada soal di section ini.
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+            @else
+
+                {{-- EMPTY STATE: Jika Belum Ada Section --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px] flex flex-col items-center justify-center p-10 text-center">
+                    <div class="bg-blue-50 p-4 rounded-full mb-4">
+                        <i data-lucide="layers" size="40" class="text-blue-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Belum Ada Section</h3>
+                    <p class="text-gray-500 max-w-md mb-6">
+                        Tambahkan section (Misal: Listening, Reading) untuk mulai mengisi soal ujian.
+                    </p>
+                    <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition transform hover:scale-105">
+                        <i data-lucide="plus"></i> Tambah Section Baru
+                    </button>
+                </div>
+
+            @endif
+
+        </main>
+    </div>
+
+    {{-- MODAL POPUP TAMBAH SECTION --}}
+    <div id="modalSection" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Tambah Section Baru</h3>
+                <button onclick="document.getElementById('modalSection').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
+            
+            <form action="{{ route('guru.ujian.section.store', $ujian->id) }}" method="POST" class="p-6">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Section</label>
+                    <input type="text" name="judul" placeholder="Contoh: Section 1 - Listening Comprehension" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (Menit)</label>
+                    <input type="number" name="durasi_menit" value="20" min="1"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                    <p class="text-xs text-gray-500 mt-1">Siswa akan otomatis pindah section jika waktu habis.</p>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('modalSection').classList.add('hidden')" 
+                        class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-md">
+                        Simpan Section
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/soal.create.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Soal - {{ $section->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
+    <script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            
+            {{-- Header --}}
+            <div class="mb-6">
+                <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2">
+                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Detail Ujian
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Tambah Soal Baru</h1>
+                <p class="text-gray-500 text-sm">Menambahkan soal ke section: <span class="font-semibold text-blue-600">{{ $section->judul }}</span></p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-4xl">
+                
+                <form action="{{ route('guru.ujian.soal.store', $section->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    {{-- Pertanyaan --}}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-900 mb-2">Pertanyaan</label>
+                        <input id="pertanyaan" type="hidden" name="pertanyaan" value="{{ old('pertanyaan') }}">
+                        <trix-editor input="pertanyaan" class="trix-content min-h-[150px] rounded-lg border-gray-300"></trix-editor>
+                        @error('pertanyaan') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Pilihan Ganda Grid --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        @foreach(['a', 'b', 'c', 'd', 'e'] as $opt)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Pilihan {{ $opt }}</label>
+                            <div class="flex gap-2">
+                                <span class="flex items-center justify-center w-8 h-10 bg-gray-100 border border-gray-300 rounded font-bold uppercase text-gray-500">{{ $opt }}</span>
+                                <input type="text" name="pilihan_{{ $opt }}" value="{{ old('pilihan_'.$opt) }}"
+                                    class="flex-1 border border-gray-300 rounded-lg px-3 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Kunci Jawaban & Bobot --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Kunci Jawaban</label>
+                            <select name="kunci_jawaban" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:ring-blue-500 outline-none" required>
+                                <option value="" disabled selected>Pilih Kunci Jawaban...</option>
+                                <option value="a">A</option>
+                                <option value="b">B</option>
+                                <option value="c">C</option>
+                                <option value="d">D</option>
+                                <option value="e">E</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Bobot Nilai</label>
+                            <input type="number" name="bobot" value="5" min="1" 
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-blue-500 outline-none" required>
+                            <p class="text-xs text-gray-500 mt-1">Nilai jika siswa menjawab benar.</p>
+                        </div>
+                    </div>
+
+                    {{-- Submit --}}
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                            Batal
+                        </a>
+                        <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md">
+                            Simpan Soal
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/index.blade.php">
+{{-- resources/views/guru/ujian/index.blade.php --}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen Ujian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            {{-- Header --}}
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Daftar Ujian Anda</h1>
+                <a href="{{ route('guru.ujian.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                    <i data-lucide="plus"></i> Tambah Ujian
+                </a>
+            </div>
+
+            {{-- Alert Success --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Table --}}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3">Judul</th>
+                            <th class="px-6 py-3">Kode</th>
+                            <th class="px-6 py-3">Waktu</th>
+                            <th class="px-6 py-3">Durasi</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($ujian as $item)
+                            <tr class="bg-white hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">{{ $item->judul }}</td>
+                                <td class="px-6 py-4 font-mono">{{ $item->kode_ujian }}</td>
+                                <td class="px-6 py-4">
+                                    {{ $item->waktu_mulai->format('d M Y H:i') }}
+                                </td>
+                                <td class="px-6 py-4">{{ $item->durasi_menit }} Menit</td>
+                                <td class="px-6 py-4">
+                                    @if($item->is_published)
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Published</span>
+                                    @else
+                                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Draft</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="#" class="text-blue-600 hover:underline mr-3">Edit</a>
+                                    <a href="#" class="text-red-600 hover:underline">Hapus</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                                    Belum ada ujian. Klik tombol Tambah Ujian di atas!
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $ujian->links() }}
+            </div>
+        </main>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
 </file>
 
 <file path="resources/views/livewire/alert-kunci-tab.blade.php">
@@ -5029,267 +5373,6 @@ $classes = ($active ?? false)
         </div>
     </div>
 </x-app-layout>
-</file>
-
-<file path="resources/views/siswa/ujian/akses.blade.php">
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masukan Token Ujian</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Poppins', sans-serif; }
-        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        /* Style khusus buat input token biar kayak OTP */
-        .token-input { letter-spacing: 0.5em; text-align: center; font-family: monospace; }
-    </style>
-</head>
-
-<body class="bg-gray-100 font-sans flex text-slate-800">
-
-    {{-- SIDEBAR --}}
-    <div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50 shadow-xl">
-        <div class="text-white mb-4 cursor-pointer hover:scale-110 transition duration-300">
-            <i data-lucide="menu" size="28"></i>
-        </div>
-
-        <a href="{{ route('siswa.dashboard') }}?page=home" 
-           class="p-3 rounded-xl cursor-pointer transition text-white/70 hover:text-white hover:bg-white/10"
-           title="Dashboard">
-            <i data-lucide="home" size="28"></i>
-        </a>
-
-        {{-- Menu Ujian Aktif --}}
-        <a href="{{ route('siswa.ujian.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition bg-white/20 shadow-lg ring-1 ring-white/30 text-white"
-           title="Ujian">
-            <i data-lucide="edit-3" size="28"></i>
-        </a>
-
-        {{-- BAGIAN USER PROFILE & LOGOUT --}}
-        <div class="mt-auto flex flex-col gap-6 mb-4">
-            <div class="relative group">
-                {{-- Avatar --}}
-                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer border-2 border-transparent group-hover:border-white transition shadow-md">
-                    <span class="text-purple-700 font-bold uppercase">
-                        {{ substr(Auth::user()->username ?? 'S', 0, 1) }}
-                    </span>
-                </div>
-
-                {{-- Menu Logout (Muncul pas di-hover) --}}
-                <div class="hidden group-hover:block absolute left-10 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-50 animate-fade-in">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2">
-                            <i data-lucide="log-out" size="14"></i> Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div> {{-- <--- PENUTUP SIDEBAR (PENTING!) --}}
-
-    {{-- MAIN CONTENT --}}
-    <main class="flex-1 ml-20 p-8 min-h-screen flex items-center justify-center relative overflow-hidden">
-        
-        {{-- Background Decoration --}}
-        <div class="absolute top-0 left-0 w-full h-64 bg-[#004e92]/5 -z-10 skew-y-3 transform origin-top-left"></div>
-        <div class="absolute bottom-0 right-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -z-10"></div>
-
-        <div class="w-full max-w-lg animate-fade-in">
-            
-            {{-- Tombol Kembali --}}
-            <div class="mb-6">
-                <a href="{{ route('siswa.ujian.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-[#004e92] transition font-medium text-sm">
-                    <i data-lucide="arrow-left" size="18"></i> Kembali ke Daftar Ujian
-                </a>
-            </div>
-
-            <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100 relative">
-                
-                {{-- Header Card --}}
-                <div class="text-center mb-8">
-                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#004e92]">
-                        <i data-lucide="lock-keyhole" size="40"></i>
-                    </div>
-                    <h1 class="text-2xl font-bold text-gray-800">Akses Ujian</h1>
-                    <p class="text-gray-500 text-sm mt-2">Silakan masukkan 6 digit kode token yang diberikan oleh pengawas.</p>
-                </div>
-
-                {{-- Alert Error --}}
-                @if (session('error'))
-                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg flex items-start gap-3 animate-pulse">
-                        <i data-lucide="alert-circle" class="text-red-500 shrink-0 mt-0.5" size="18"></i>
-                        <p class="text-sm text-red-700 font-medium">{{ session('error') }}</p>
-                    </div>
-                @endif
-
-                {{-- Form Token --}}
-                <form method="POST" action="{{ route('siswa.ujian.akses.post') }}" autocomplete="off">
-                    @csrf
-
-                    <div class="mb-8">
-                        <label class="block text-gray-700 font-bold text-xs uppercase tracking-wider mb-3 text-center">
-                            Kode Token
-                        </label>
-                        
-                        <div class="relative">
-                            <input type="text" 
-                                   name="kode_token" 
-                                   maxlength="6" 
-                                   required 
-                                   autofocus
-                                   placeholder="_ _ _ _ _ _"
-                                   class="token-input w-full py-4 px-6 text-3xl font-bold text-gray-800 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-[#004e92] focus:ring-4 focus:ring-blue-500/10 transition placeholder-gray-300 uppercase"
-                                   oninput="this.value = this.value.toUpperCase()">
-                            
-                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                                <i data-lucide="key" size="20"></i>
-                            </div>
-                        </div>
-                        <p class="text-center text-xs text-gray-400 mt-3">
-                            Pastikan token sesuai dengan sesi ujian saat ini.
-                        </p>
-                    </div>
-
-                    <button type="submit" 
-                            class="w-full py-4 bg-[#004e92] hover:bg-[#003d73] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
-                        Validasi Token <i data-lucide="arrow-right" size="20"></i>
-                    </button>
-                </form>
-
-            </div>
-
-            <p class="text-center text-gray-400 text-xs mt-8">
-                &copy; {{ date('Y') }} CBT Al-Ma'soem. Secure Exam System.
-            </p>
-        </div>
-
-    </main>
-
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>
-</file>
-
-<file path="resources/views/siswa/ujian/hasil.blade.php">
-@extends('layouts.app')
-
-@section('content')
-<div class="max-w-6xl mx-auto py-6">
-
-    <h1 class="text-2xl font-bold mb-2">Hasil Ujian</h1>
-
-    <h3 class="text-lg text-gray-700 mb-2">
-        {{ $sesi->ujian->judul }}
-    </h3>
-
-    {{-- STATUS --}}
-    <p class="mb-4">
-        Status:
-        <span class="px-2 py-1 rounded text-sm {{ $sesi->status->badgeColor() }}">
-            {{ $sesi->status->label() }}
-        </span>
-    </p>
-
-    <hr class="my-6">
-
-    {{-- TOTAL SKOR --}}
-    <h2 class="text-xl font-semibold">Total Skor Sementara</h2>
-    <p class="text-3xl font-bold my-2">{{ $totalSkor }}</p>
-
-    <p class="text-sm text-gray-500 mb-6">
-        * Essay belum dinilai. Skor bisa berubah.
-    </p>
-
-    <hr class="my-6">
-
-    {{-- HASIL PER SECTION --}}
-    @foreach ($sesi->ujian->sections as $section)
-        <div class="mb-10">
-            <h3 class="text-lg font-semibold mb-3">
-                Section: {{ $section->judul_section }}
-            </h3>
-
-            <div class="overflow-x-auto">
-                <table class="w-full border border-gray-300 text-sm">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="border px-2 py-1">No</th>
-                            <th class="border px-2 py-1">Pertanyaan</th>
-                            <th class="border px-2 py-1">Jawaban</th>
-                            <th class="border px-2 py-1">Kunci</th>
-                            <th class="border px-2 py-1">Status</th>
-                            <th class="border px-2 py-1">Skor</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($section->soal as $soal)
-                            @php
-                                $jawaban = $sesi->jawaban
-                                    ->firstWhere('soal_id', $soal->id);
-                            @endphp
-
-                            <tr>
-                                <td class="border px-2 py-1 text-center">
-                                    {{ $soal->nomor_urut }}
-                                </td>
-
-                                <td class="border px-2 py-1">
-                                    {{ $soal->pertanyaan }}
-                                </td>
-
-                                {{-- JAWABAN SISWA --}}
-                                <td class="border px-2 py-1">
-                                    @if ($jawaban)
-                                        {{ $jawaban->jawaban_pilihan ?? $jawaban->jawaban_essay }}
-                                    @else
-                                        <span class="text-gray-400">-</span>
-                                    @endif
-                                </td>
-
-                                {{-- KUNCI JAWABAN --}}
-                                <td class="border px-2 py-1 text-center">
-                                    {{ $soal->jawaban_benar ?? '-' }}
-                                </td>
-
-                                {{-- STATUS JAWABAN --}}
-                                <td class="border px-2 py-1 text-center">
-                                    @if ($jawaban && $jawaban->is_benar === 1)
-                                        <span class="text-green-600 font-semibold">Benar</span>
-                                    @elseif ($jawaban && $jawaban->is_benar === 0)
-                                        <span class="text-red-600 font-semibold">Salah</span>
-                                    @else
-                                        <span class="text-gray-500">Menunggu</span>
-                                    @endif
-                                </td>
-
-                                {{-- SKOR --}}
-                                <td class="border px-2 py-1 text-center">
-                                    {{ $jawaban->skor ?? 0 }}
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    @endforeach
-
-    <a href="{{ route('siswa.dashboard') }}"
-       class="inline-block mt-6 text-blue-600 hover:underline">
-        ← Kembali ke Dashboard
-    </a>
-
-</div>
-@endsection
 </file>
 
 <file path="resources/views/dashboard.blade.php">
@@ -7572,6 +7655,214 @@ class UjianController extends Controller
 }
 </file>
 
+<file path="app/Http/Controllers/Guru/DashboardController.php">
+<?php
+
+namespace App\Http\Controllers\Guru;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // 1. Ambil data Guru yang sedang login
+        $user = Auth::user();
+        $guru = $user->guru; // Relasi dari User ke Guru
+
+        if (!$guru) {
+            abort(403, 'Data profil guru belum lengkap. Hubungi Admin.');
+        }
+
+        // 2. Ambil Statistik
+        $totalUjian = $guru->ujian()->count();
+        
+        // Hitung ujian yang statusnya Published (Siap/Sedang jalan)
+        $ujianAktif = $guru->ujian()->where('is_published', true)->count();
+        
+        // Hitung total siswa yang pernah ikut ujian buatan guru ini (Lewat tabel Nilai -> Ujian -> Guru)
+        $totalPeserta = $guru->ujian()
+            ->withCount('sesiUjian') 
+            ->get()
+            ->sum('sesi_ujian_count');
+
+        // 3. Ambil 5 Ujian Terakhir 
+        $ujianTerbaru = $guru->ujian()
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('guru.dashboard', compact(
+            'guru', 
+            'totalUjian', 
+            'ujianAktif', 
+            'totalPeserta', 
+            'ujianTerbaru'
+        ));
+    }
+}
+</file>
+
+<file path="app/Http/Controllers/Guru/ManajemenUjianController.php">
+<?php
+
+namespace App\Http\Controllers\Guru;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Ujian;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use App\Models\Section;
+use App\Models\Soal;
+
+class ManajemenUjianController extends Controller
+{
+    // 1. Halaman Daftar Ujian
+    public function index()
+    {
+        // Ambil ujian milik guru yang sedang login
+        $ujian = Ujian::where('guru_id', Auth::user()->guru->id)
+            ->latest()
+            ->paginate(10); // Kita kasih pagination biar rapi kalau datanya banyak
+
+        return view('guru.ujian.index', compact('ujian'));
+    }
+
+    // 2. Halaman Form Tambah Ujian
+    public function create()
+    {
+        return view('guru.ujian.create');
+    }
+
+    // 3. Proses Simpan Ujian Baru ke Database
+    public function store(Request $request)
+    {
+        // Validasi input biar ga asal-asalan
+        $request->validate([
+            'judul' => 'required|max:150',
+            'durasi_menit' => 'required|integer|min:1',
+            'waktu_mulai' => 'required|date',
+            'waktu_selesai' => 'required|date|after:waktu_mulai', // Selesai wajib setelah Mulai
+        ]);
+
+        // Bikin Kode Unik Otomatis (Misal: UJN-X7Z9)
+        $kodeUnik = strtoupper(Str::random(8));
+
+        // Simpan ke DB
+        Ujian::create([
+            'guru_id' => Auth::user()->guru->id,
+            'kode_ujian' => $kodeUnik,
+            'judul' => $request->judul,
+            'deskripsi' => $request->deskripsi,
+            'durasi_menit' => $request->durasi_menit,
+            'waktu_mulai' => $request->waktu_mulai,
+            'waktu_selesai' => $request->waktu_selesai,
+            'tipe_ujian' => 'exam', // Default
+            'is_published' => false, // Default draft dulu
+        ]);
+
+        return redirect()->route('guru.ujian.index')
+            ->with('success', 'Ujian berhasil dibuat! Kode: ' . $kodeUnik);
+    }
+
+    // 4: Halaman Detail Ujian (Buat Manage Soal)
+    public function show($id)
+    {
+        // 1. Ambil data ujian + section + soal
+        $ujian = Ujian::with(['sections.soal'])->findOrFail($id);
+
+        // 2. Security Check: Pastikan yang akses adalah pemilik ujian
+        if ($ujian->guru_id !== Auth::user()->guru->id) {
+            abort(403, 'Akses Ditolak: Ini bukan ujian punya lu bang!');
+        }
+        // 3. Lempar ke view detail
+        return view('guru.ujian.show', compact('ujian'));
+    }
+
+    // 5. Simpan Section Baru
+    public function storeSection(Request $request, $id)
+    {
+        $request->validate([
+            'judul' => 'required|string|max:100',
+            'durasi_menit' => 'required|integer|min:1',
+        ]);
+
+        $ujian = \App\Models\Ujian::findOrFail($id);
+
+        // Security Check
+        if ($ujian->guru_id !== \Illuminate\Support\Facades\Auth::user()->guru->id) {
+            abort(403);
+        }
+
+        // Urutan otomatis
+        $urutan = $ujian->sections()->count() + 1;
+
+        $ujian->sections()->create([
+            'judul' => $request->judul,
+            'durasi_menit' => $request->durasi_menit,
+            'urutan' => $urutan,
+            'tipe_section' => 'standard', 
+        ]);
+
+        return redirect()->back()->with('success', 'Section berhasil ditambahkan!');
+    }
+
+    // 6. Tampilkan Form Input Soal
+    public function createSoal($sectionId)
+    {
+        $section = Section::with('ujian')->findOrFail($sectionId);
+
+        // Security Check: Punya guru ini ga?
+        if ($section->ujian->guru_id !== Auth::user()->guru->id) {
+            abort(403);
+        }
+
+        return view('guru.ujian.soal-create', compact('section'));
+    }
+
+    // 7. Simpan Soal ke Database
+    public function storeSoal(Request $request, $sectionId)
+    {
+        $request->validate([
+            'pertanyaan' => 'required',
+            'pilihan_a' => 'required',
+            'pilihan_b' => 'required',
+            'pilihan_c' => 'required',
+            'pilihan_d' => 'required',
+            // Pilihan E opsional, siapa tau cuma sampai D
+            'kunci_jawaban' => 'required|in:a,b,c,d,e',
+            'bobot' => 'required|integer|min:1',
+        ]);
+
+        $section = Section::findOrFail($sectionId);
+
+        // Hitung urutan soal otomatis
+        $urutan = $section->soal()->count() + 1;
+
+        Soal::create([
+            'section_id' => $sectionId,
+            'pertanyaan' => $request->pertanyaan,
+            'pilihan_a' => $request->pilihan_a,
+            'pilihan_b' => $request->pilihan_b,
+            'pilihan_c' => $request->pilihan_c,
+            'pilihan_d' => $request->pilihan_d,
+            'pilihan_e' => $request->pilihan_e,
+            'kunci_jawaban' => $request->kunci_jawaban,
+            'bobot' => $request->bobot,
+            'urutan' => $urutan,
+            'tipe_soal' => 'pilihan_ganda',
+        ]);
+
+        // Redirect balik ke halaman Detail Ujian (Show)
+        return redirect()->route('guru.ujian.show', $section->ujian_id)
+            ->with('success', 'Soal berhasil ditambahkan ke section ' . $section->judul);
+    }
+}
+</file>
+
 <file path="app/Http/Controllers/Guru/SoalController.php">
 <?php
 
@@ -8569,6 +8860,118 @@ return new class extends Migration
 };
 </file>
 
+<file path="database/seeders/DummyUjianSeeder.php">
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Ujian;
+use App\Models\UjianSection;
+use App\Enums\TipeUjian;
+use Illuminate\Support\Facades\DB;
+
+class DummyUjianSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $guruId = DB::table('guru')
+            ->whereNull('deleted_at')
+            ->value('id');
+
+        if (! $guruId) {
+            throw new \Exception('Seeder error: Data guru tidak ditemukan di tabel guru.');
+        }
+
+        $ujian = Ujian::firstOrCreate(
+            ['kode_ujian' => 'DUMMY-TOEFL'],
+            [
+                'guru_id' => $guruId,
+                'judul' => 'Simulasi TOEFL ITP',
+                'deskripsi' => 'Ujian dummy untuk testing alur siswa',
+                'tipe_ujian' => TipeUjian::PRACTICE,
+                'durasi_menit' => 115,
+                'waktu_mulai' => now()->subDay(),
+                'waktu_selesai' => now()->addDay(),
+                'is_published' => true,
+            ]
+        );
+
+        // UPDATE URUTAN DI SINI:
+        // 1. Reading
+        // 2. Writing (Structure)
+        // 3. Listening
+        $sections = [
+            [
+                'judul_section' => 'Reading Comprehension', 
+                'tipe_section' => 'reading',    
+                'urutan' => 1, 
+                'durasi_menit' => 55
+            ],
+            [
+                'judul_section' => 'Structure & Written',   
+                'tipe_section' => 'writing',    
+                'urutan' => 2, 
+                'durasi_menit' => 25
+            ],
+            [
+                'judul_section' => 'Listening Comprehension', 
+                'tipe_section' => 'listening',  
+                'urutan' => 3, 
+                'durasi_menit' => 35
+            ],
+        ];
+
+        foreach ($sections as $s) {
+            UjianSection::updateOrCreate(
+                [
+                    'ujian_id' => $ujian->id, 
+                    'tipe_section' => $s['tipe_section'] // Kunci update biar gak duplikat
+                ],
+                array_merge($s, ['ujian_id' => $ujian->id])
+            );
+        }
+    }
+}
+</file>
+
+<file path="database/seeders/GuruSeeder.php">
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Guru;
+use App\Models\User;
+
+class GuruSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Cari user spesifik berdasarkan username yang dibuat di UserSeeder
+        $userGuru = User::where('username', 'gurubahasa')->first();
+
+        // Fallback jika tidak ketemu username, cari berdasarkan role
+        if (! $userGuru) {
+            $userGuru = User::where('role', 'guru')->first();
+        }
+
+        if (! $userGuru) {
+            throw new \Exception('Seeder error: User guru belum ada. Pastikan UserSeeder dijalankan duluan.');
+        }
+
+        Guru::firstOrCreate(
+            ['user_id' => $userGuru->id],
+            [
+                'nip' => '194468600943',
+                'nama_lengkap' => 'Joana Olson',
+                'mata_pelajaran' => 'Bahasa Inggris',
+            ]
+        );
+    }
+}
+</file>
+
 <file path="database/seeders/SiswaSeeder.php">
 <?php
 
@@ -8632,6 +9035,266 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 Alpine.start();
+</file>
+
+<file path="resources/views/components/dashboard-sidebar.blade.php">
+@props(['active' => 'dashboard', 'role' => 'siswa'])
+
+<div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50">
+
+    {{-- Menu Icon --}}
+    <div class="text-white mb-4 cursor-pointer">
+        <i data-lucide="menu" size="28"></i>
+    </div>
+
+    {{-- Navigation Items (Dynamic based on Role) --}}
+    @if($role === 'admin')
+        {{-- Admin Navigation --}}
+        <a href="{{ route('admin.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="layout-dashboard" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('admin.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'ujian' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="clipboard-list" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('admin.stats') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+        </a>
+
+    @elseif($role === 'guru')
+        {{-- Guru Navigation --}}
+        <a href="{{ route('guru.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="home" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('guru.soal.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'soal' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="file-text" size="28" class="text-white"></i>
+        </a>
+
+      <a href="#" 
+            onclick="alert('Fitur Statistik segera hadir!')"
+            class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+                <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+            </a>
+    @else
+        {{-- Siswa Navigation --}}
+        <a href="{{ route('siswa.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'home' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="home" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('siswa.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'test' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="edit-3" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('siswa.nilai') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'analysis' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+        </a>
+    @endif
+
+    {{-- Bottom Section (Settings + User) --}}
+    <div class="mt-auto flex flex-col items-center gap-6 mb-4">
+
+        {{-- Settings Icon --}}
+        <i data-lucide="settings" size="28" class="text-white/70 hover:text-white cursor-pointer transition"></i>
+
+        {{-- User Dropdown dengan Alpine.js --}}
+        <div class="relative" x-data="{ open: false }">
+            <div @click="open = !open" 
+                 class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-300 transition">
+                <i data-lucide="user" size="22" class="text-purple-700"></i>
+            </div>
+
+            {{-- Dropdown Menu --}}
+            <div x-show="open" 
+                 @click.away="open = false"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-90"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-90"
+                 class="absolute left-[88px] bottom-0 bg-white shadow-lg rounded-xl p-3 border border-gray-200 w-40"
+                 style="display: none;">
+                
+                <div class="text-xs text-gray-500 px-3 pb-2 border-b mb-2">
+            {{-- Pastikan atribut nama sesuai database, biasanya name atau username --}}
+            <div class="font-semibold text-gray-700">{{ auth()->user()->username ?? auth()->user()->name }}</div>
+            
+            {{-- FIX: Tambahkan ->value karena role adalah Enum --}}
+            <div class="text-[10px]">{{ ucfirst(auth()->user()->role->value) }}</div>
+            </div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition text-center">
+                        <i data-lucide="log-out" size="16" class="inline mr-1"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</file>
+
+<file path="resources/views/guru/dashboard.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Guru - CBT TOEFL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- 1. Panggil Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="dashboard" />
+
+        {{-- 2. Konten Utama --}}
+        <main class="flex-1 ml-20 p-8 transition-all duration-300">
+            
+            {{-- Header --}}
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Dashboard Guru</h1>
+                    <p class="text-gray-500 text-sm mt-1">Selamat datang, <span class="text-[#004e92] font-semibold">{{ $guru->nama_lengkap }}</span>!</p>
+                </div>
+                
+                {{-- Tombol Aksi Cepat (Sudah diperbaiki jadi Link) --}}
+                <a href="{{ route('guru.ujian.create') }}" class="bg-[#004e92] hover:bg-[#003d73] text-white px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition transform active:scale-95">
+                    <i data-lucide="plus-circle" size="18"></i> Buat Ujian Baru
+                </a>
+            </header>
+
+            {{-- Stats Cards --}}
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {{-- Card 1 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                            <i data-lucide="file-text" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Total Ujian</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalUjian }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card 2 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-green-50 text-green-600 rounded-xl">
+                            <i data-lucide="radio" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Ujian Aktif</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $ujianAktif }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card 3 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                            <i data-lucide="users" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Total Peserta</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalPeserta }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Tabel Ujian Terbaru --}}
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="clock" size="20" class="text-gray-400"></i> Ujian Terbaru Anda
+                    </h3>
+                    <a href="{{ route('guru.ujian.index') }}" class="text-sm text-[#004e92] hover:underline">Lihat Semua</a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3">Judul Ujian</th>
+                                <th class="px-6 py-3">Kode</th>
+                                <th class="px-6 py-3">Waktu Mulai</th>
+                                <th class="px-6 py-3 text-center">Status</th>
+                                <th class="px-6 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($ujianTerbaru as $ujian)
+                                <tr class="bg-white hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 font-medium text-gray-900">
+                                        {{ $ujian->judul }}
+                                        <div class="text-xs text-gray-400 font-normal mt-0.5">
+                                            {{-- Handle Enum Display --}}
+                                            {{ ucfirst($ujian->tipe_ujian->value ?? $ujian->tipe_ujian) }} • {{ $ujian->durasi_menit }} Menit
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-mono text-xs">
+                                        <span class="bg-gray-100 px-2 py-1 rounded text-gray-600">{{ $ujian->kode_ujian }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $ujian->waktu_mulai->format('d M Y, H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if($ujian->is_published)
+                                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Published</span>
+                                        @else
+                                            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Draft</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        {{-- Link ke Halaman Detail/Kelola Soal --}}
+                                        <a href="{{ route('guru.ujian.show', $ujian->id) }}" class="text-blue-600 hover:text-blue-900 font-medium hover:underline">
+                                            Kelola
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                                        Belum ada ujian yang dibuat. Yuk bikin sekarang!
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
 </file>
 
 <file path="resources/views/layouts/app.blade.php">
@@ -8844,13 +9507,13 @@ Alpine.start();
 </nav>
 </file>
 
-<file path="resources/views/siswa/ujian/show.blade.php">
+<file path="resources/views/siswa/ujian/akses.blade.php">
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detail Ujian - {{ $ujian->judul }}</title>
+    <title>Masukan Token Ujian</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -8858,6 +9521,8 @@ Alpine.start();
         body { font-family: 'Poppins', sans-serif; }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Style khusus buat input token biar kayak OTP */
+        .token-input { letter-spacing: 0.5em; text-align: center; font-family: monospace; }
     </style>
 </head>
 
@@ -8875,6 +9540,7 @@ Alpine.start();
             <i data-lucide="home" size="28"></i>
         </a>
 
+        {{-- Menu Ujian Aktif --}}
         <a href="{{ route('siswa.ujian.index') }}" 
            class="p-3 rounded-xl cursor-pointer transition bg-white/20 shadow-lg ring-1 ring-white/30 text-white"
            title="Ujian">
@@ -8902,126 +9568,352 @@ Alpine.start();
                 </div>
             </div>
         </div>
-    </div> 
+    </div> {{-- <--- PENUTUP SIDEBAR (PENTING!) --}}
 
     {{-- MAIN CONTENT --}}
-    <main class="flex-1 ml-20 p-8 min-h-screen transition-all">
+    <main class="flex-1 ml-20 p-8 min-h-screen flex items-center justify-center relative overflow-hidden">
+        
+        {{-- Background Decoration --}}
+        <div class="absolute top-0 left-0 w-full h-64 bg-[#004e92]/5 -z-10 skew-y-3 transform origin-top-left"></div>
+        <div class="absolute bottom-0 right-0 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl -z-10"></div>
 
-        {{-- BREADCRUMB & BACK BUTTON --}}
-        <div class="mb-8 flex items-center gap-3">
-            <a href="{{ route('siswa.ujian.index') }}" class="p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition">
-                <i data-lucide="arrow-left" size="20"></i>
-            </a>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">Detail Ujian</h1>
-                <p class="text-gray-500 text-sm">Informasi lengkap sebelum memulai tes.</p>
+        <div class="w-full max-w-lg animate-fade-in">
+            
+            {{-- Tombol Kembali --}}
+            <div class="mb-6">
+                <a href="{{ route('siswa.ujian.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-[#004e92] transition font-medium text-sm">
+                    <i data-lucide="arrow-left" size="18"></i> Kembali ke Daftar Ujian
+                </a>
             </div>
+
+            <div class="bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-gray-100 relative">
+                
+                {{-- Header Card --}}
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#004e92]">
+                        <i data-lucide="lock-keyhole" size="40"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">Akses Ujian</h1>
+                    <p class="text-gray-500 text-sm mt-2">Silakan masukkan 6 digit kode token yang diberikan oleh pengawas.</p>
+                </div>
+
+                {{-- Alert Error --}}
+                @if (session('error'))
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg flex items-start gap-3 animate-pulse">
+                        <i data-lucide="alert-circle" class="text-red-500 shrink-0 mt-0.5" size="18"></i>
+                        <p class="text-sm text-red-700 font-medium">{{ session('error') }}</p>
+                    </div>
+                @endif
+
+                {{-- Form Token --}}
+                <form method="POST" action="{{ route('siswa.ujian.akses.post') }}" autocomplete="off">
+                    @csrf
+
+                    <div class="mb-8">
+                        <label class="block text-gray-700 font-bold text-xs uppercase tracking-wider mb-3 text-center">
+                            Kode Token
+                        </label>
+                        
+                        <div class="relative">
+                            <input type="text" 
+                                   name="kode_token" 
+                                   maxlength="6" 
+                                   required 
+                                   autofocus
+                                   placeholder="_ _ _ _ _ _"
+                                   class="token-input w-full py-4 px-6 text-3xl font-bold text-gray-800 bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-[#004e92] focus:ring-4 focus:ring-blue-500/10 transition placeholder-gray-300 uppercase"
+                                   oninput="this.value = this.value.toUpperCase()">
+                            
+                            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                                <i data-lucide="key" size="20"></i>
+                            </div>
+                        </div>
+                        <p class="text-center text-xs text-gray-400 mt-3">
+                            Pastikan token sesuai dengan sesi ujian saat ini.
+                        </p>
+                    </div>
+
+                    <button type="submit" 
+                            class="w-full py-4 bg-[#004e92] hover:bg-[#003d73] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95 flex items-center justify-center gap-2">
+                        Validasi Token <i data-lucide="arrow-right" size="20"></i>
+                    </button>
+                </form>
+
+            </div>
+
+            <p class="text-center text-gray-400 text-xs mt-8">
+                &copy; {{ date('Y') }} CBT Al-Ma'soem. Secure Exam System.
+            </p>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/siswa/ujian/hasil.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasil Ujian - {{ $sesi->ujian->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        .animate-scale-up { animation: scaleUp 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        /* Print Style */
+        @media print {
+            .sidebar, .no-print { display: none !important; }
+            main { margin-left: 0 !important; padding: 0 !important; }
+            .shadow-sm, .shadow-xl { box-shadow: none !important; border: 1px solid #ddd; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans flex text-slate-800">
+
+    {{-- SIDEBAR --}}
+    <div class="sidebar w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50 shadow-xl">
+        <div class="text-white mb-4">
+            <i data-lucide="award" size="28"></i>
+        </div>
+
+        <a href="{{ route('siswa.dashboard') }}?page=home" 
+           class="p-3 rounded-xl cursor-pointer transition text-white/70 hover:text-white hover:bg-white/10"
+           title="Dashboard">
+            <i data-lucide="home" size="28"></i>
+        </a>
+
+        <a href="{{ route('siswa.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition bg-white/20 shadow-lg ring-1 ring-white/30 text-white"
+           title="Ujian">
+            <i data-lucide="edit-3" size="28"></i>
+        </a>
+
+        {{-- USER PROFILE --}}
+        <div class="mt-auto flex flex-col gap-6 mb-4">
+            <div class="relative group">
+                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer border-2 border-transparent group-hover:border-white transition shadow-md">
+                    <span class="text-purple-700 font-bold uppercase">
+                        {{ substr(Auth::user()->username ?? 'S', 0, 1) }}
+                    </span>
+                </div>
+                {{-- Menu Logout --}}
+                <div class="hidden group-hover:block absolute left-14 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-50 animate-fade-in">
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2">
+                            <i data-lucide="log-out" size="14"></i> Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MAIN CONTENT --}}
+    <main class="flex-1 ml-20 p-8 min-h-screen">
+
+        {{-- HEADER & BREADCRUMB --}}
+        <div class="flex justify-between items-center mb-8 no-print">
+            <div>
+                <a href="{{ route('siswa.dashboard') }}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#004e92] mb-2 transition">
+                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Dashboard
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Laporan Hasil Ujian</h1>
+            </div>
+            
+            <button onclick="window.print()" class="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-xl shadow-sm hover:bg-gray-50 transition font-medium text-sm">
+                <i data-lucide="printer" size="18"></i> Cetak Hasil
+            </button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
-            
-            {{-- KOLOM KIRI: INFO UTAMA --}}
-            <div class="lg:col-span-2 space-y-6">
+
+            {{-- KOLOM KIRI: RINGKASAN SKOR --}}
+            <div class="lg:col-span-1 space-y-6">
                 
-                {{-- CARD HEADER UJIAN --}}
-                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-6 opacity-5">
-                        <i data-lucide="file-check" size="120"></i>
+                {{-- HERO CARD: TOTAL SCORE --}}
+                <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                    
+                    <h3 class="text-gray-500 font-medium mb-4 uppercase tracking-wider text-xs">Total Skor TOEFL</h3>
+                    
+                    <div class="animate-scale-up inline-block">
+                        <span class="text-7xl font-extrabold text-[#004e92] tracking-tighter">
+                            {{ $totalSkor }}
+                        </span>
                     </div>
 
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="px-3 py-1 bg-blue-100 text-[#004e92] text-xs font-bold rounded-full">
-                                EXAM
-                            </span>
-                            <span class="text-gray-400 text-sm flex items-center gap-1">
-                                <i data-lucide="clock" size="14"></i> {{ $ujian->durasi_menit }} Menit Total
-                            </span>
-                        </div>
+                    {{-- Logic Predikat Sederhana --}}
+                    @php
+                        $predikat = match(true) {
+                            $totalSkor >= 550 => ['label' => 'EXCELLENT', 'color' => 'bg-green-100 text-green-700 border-green-200'],
+                            $totalSkor >= 450 => ['label' => 'GOOD', 'color' => 'bg-blue-100 text-blue-700 border-blue-200'],
+                            default           => ['label' => 'FAIR', 'color' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
+                        };
+                    @endphp
 
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ $ujian->judul }}</h2>
-                        <p class="text-gray-600 leading-relaxed">
-                            {{ $ujian->deskripsi ?? 'Tidak ada deskripsi ujian.' }}
-                        </p>
+                    <div class="mt-6 flex justify-center">
+                        <span class="px-4 py-1.5 rounded-full text-xs font-bold border {{ $predikat['color'] }}">
+                            {{ $predikat['label'] }}
+                        </span>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-100 grid grid-cols-2 gap-4 text-left">
+                        <div>
+                            <p class="text-xs text-gray-400">Nama Peserta</p>
+                            <p class="font-semibold text-gray-800 truncate">{{ Auth::user()->username }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400">Tanggal Ujian</p>
+                            <p class="font-semibold text-gray-800">{{ now()->format('d M Y') }}</p>
+                        </div>
                     </div>
                 </div>
 
-                {{-- CARD LIST SECTION --}}
-                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                {{-- DETAIL SKOR PER SECTION --}}
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                     <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
-                        <i data-lucide="layers" size="20" class="text-[#004e92]"></i>
-                        Daftar Section Ujian
+                        <i data-lucide="bar-chart-2" size="20" class="text-[#004e92]"></i>
+                        Rincian Skor
                     </h3>
 
                     <div class="space-y-4">
-                        @foreach ($ujian->sections as $section)
+                        @foreach ($sesi->ujian->sections as $section)
                             @php
+                                // Hitung skor kasar per section (Logic Sederhana)
+                                $sectionScore = 0;
+                                foreach($section->soal as $soal) {
+                                    $jawaban = $sesi->jawaban->firstWhere('soal_id', $soal->id);
+                                    if($jawaban && $jawaban->is_benar) {
+                                        $sectionScore += $soal->bobot_nilai;
+                                    }
+                                }
+                                // Konversi dummy: Skor asli * 10 (biar keliatan gede ala TOEFL)
+                                // Nanti bisa diganti logic konversi TOEFL beneran
+                                $convertedScore = $sectionScore * 10; 
+                                
                                 $icon = match($section->tipe_section->value ?? 'default') {
                                     'listening' => 'headphones',
                                     'reading'   => 'book-open',
-                                    'structure' => 'pen-tool',
-                                    'writing'   => 'edit',
-                                    default     => 'file-text'
+                                    default     => 'pen-tool'
+                                };
+                                $color = match($section->tipe_section->value ?? 'default') {
+                                    'listening' => 'bg-blue-50 text-blue-600',
+                                    'reading'   => 'bg-orange-50 text-orange-600',
+                                    default     => 'bg-purple-50 text-purple-600'
                                 };
                             @endphp
-                            
-                            <div class="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition group">
-                                <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm text-[#004e92] group-hover:scale-110 transition">
-                                    <i data-lucide="{{ $icon }}" size="24"></i>
-                                </div>
-                                <div class="ml-4 flex-1">
-                                    <h4 class="font-bold text-gray-800 text-sm group-hover:text-[#004e92] transition">
-                                        {{ $section->judul_section }}
-                                    </h4>
-                                    <p class="text-xs text-gray-500 capitalize">{{ $section->tipe_section->value ?? 'Standard' }} Section</p>
+
+                            <div class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition border border-transparent hover:border-gray-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg {{ $color }} flex items-center justify-center">
+                                        <i data-lucide="{{ $icon }}" size="20"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-gray-700">{{ $section->judul_section }}</p>
+                                        <p class="text-xs text-gray-400 capitalize">{{ $section->tipe_section->value ?? '-' }}</p>
+                                    </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="block font-bold text-gray-700">{{ $section->durasi_menit }}</span>
-                                    <span class="text-xs text-gray-400">Menit</span>
+                                    <span class="block font-bold text-gray-800 text-lg">{{ $convertedScore }}</span>
                                 </div>
                             </div>
                         @endforeach
                     </div>
                 </div>
+
             </div>
 
-            {{-- KOLOM KANAN: CTA --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 sticky top-8">
-                    <h3 class="font-bold text-gray-800 mb-4">Persiapan</h3>
-                    
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-start gap-3 text-sm text-gray-600">
-                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
-                            Pastikan koneksi internet stabil.
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-gray-600">
-                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
-                            Gunakan headset untuk sesi Listening.
-                        </li>
-                        <li class="flex items-start gap-3 text-sm text-gray-600">
-                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
-                            Dilarang pindah tab (Auto-lock aktif).
-                        </li>
-                    </ul>
+            {{-- KOLOM KANAN: ANALISIS JAWABAN --}}
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i data-lucide="list-checks" size="20" class="text-[#004e92]"></i>
+                            Analisis Jawaban
+                        </h3>
+                        <span class="text-xs font-medium text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                            Total Soal: {{ $sesi->jawaban->count() }}
+                        </span>
+                    </div>
 
-                    <div class="pt-6 border-t border-gray-100">
-                        <a href="{{ route('siswa.ujian.akses') }}" 
-                           class="w-full flex justify-center items-center gap-2 py-4 bg-[#004e92] hover:bg-[#003d73] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95">
-                            Mulai Ujian <i data-lucide="arrow-right" size="20"></i>
-                        </a>
-                        <p class="text-xs text-center text-gray-400 mt-3">
-                            Anda akan diminta memasukkan Token.
-                        </p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="px-6 py-4 font-medium">No</th>
+                                    <th class="px-6 py-4 font-medium w-1/2">Pertanyaan (Cuplikan)</th>
+                                    <th class="px-6 py-4 font-medium text-center">Jawabanmu</th>
+                                    <th class="px-6 py-4 font-medium text-center">Kunci</th>
+                                    <th class="px-6 py-4 font-medium text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($sesi->ujian->sections as $section)
+                                    {{-- Section Header di dalam Tabel --}}
+                                    <tr class="bg-gray-50/80">
+                                        <td colspan="5" class="px-6 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide">
+                                            {{ $section->judul_section }}
+                                        </td>
+                                    </tr>
+
+                                    @foreach ($section->soal as $soal)
+                                        @php
+                                            $jawaban = $sesi->jawaban->firstWhere('soal_id', $soal->id);
+                                            $isCorrect = $jawaban && $jawaban->is_benar;
+                                            $userAns = $jawaban->jawaban_pilihan ?? $jawaban->jawaban_essay ?? '-';
+                                        @endphp
+                                        <tr class="hover:bg-gray-50/50 transition">
+                                            <td class="px-6 py-4 font-medium text-gray-900 text-center">
+                                                {{ $soal->nomor_urut }}
+                                            </td>
+                                            <td class="px-6 py-4 text-gray-600 truncate max-w-xs" title="{{ $soal->pertanyaan }}">
+                                                {{ Str::limit($soal->pertanyaan, 60) }}
+                                            </td>
+                                            <td class="px-6 py-4 text-center font-bold {{ $isCorrect ? 'text-green-600' : 'text-red-500' }}">
+                                                {{ $userAns }}
+                                            </td>
+                                            <td class="px-6 py-4 text-center text-gray-500">
+                                                {{ $soal->jawaban_benar ?? 'Essay' }}
+                                            </td>
+                                            <td class="px-6 py-4 text-center">
+                                                @if($isCorrect)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <i data-lucide="check" size="12"></i> Benar
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <i data-lucide="x" size="12"></i> Salah
+                                                    </span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
         </div>
 
-        <footer class="text-center mt-12 pb-6 text-gray-400 text-xs">
-            &copy; {{ date('Y') }} CBT Al-Ma'soem. All rights reserved.
-        </footer>
+        <div class="mt-8 text-center text-xs text-gray-400 no-print">
+            &copy; {{ date('Y') }} CBT Al-Ma'soem. Hasil ini bersifat sementara untuk simulasi.
+        </div>
 
     </main>
 
@@ -9047,6 +9939,43 @@ Schedule::command('leaderboard:update')
 
 // Bersihin sampah cache tiap jam 2 pagi
 //Schedule::command('cache:clear')->dailyAt('02:00');
+</file>
+
+<file path="routes/guru.php">
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Guru\DashboardController;
+use App\Http\Controllers\Guru\ManajemenUjianController;
+use App\Http\Controllers\Guru\SoalController;
+
+Route::prefix('guru')
+    ->middleware(['auth', 'role:guru'])
+    ->name('guru.') 
+    ->group(function () {
+        
+        // 1. Dashboard Utama (Jadi: guru.dashboard)
+        Route::get('/dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        // 2. CRUD Ujian (Jadi: guru.ujian.index, guru.ujian.create, dll)
+        Route::resource('ujian', ManajemenUjianController::class);
+
+        // 3. Route Khusus: Simpan Section (FIX: Jangan pakai guru. lagi depannya)
+        Route::post('/ujian/{id}/section', [ManajemenUjianController::class, 'storeSection'])
+            ->name('ujian.section.store'); // Hasil akhir: guru.ujian.section.store
+
+        // 4. Route Khusus: Soal (FIX: Jangan pakai guru. lagi depannya)
+        Route::get('/section/{section}/soal/create', [ManajemenUjianController::class, 'createSoal'])
+            ->name('ujian.soal.create'); // Hasil akhir: guru.ujian.soal.create
+            
+        Route::post('/section/{section}/soal', [ManajemenUjianController::class, 'storeSoal'])
+            ->name('ujian.soal.store'); // Hasil akhir: guru.ujian.soal.store
+
+        // Resource Soal
+        Route::resource('soal', SoalController::class);
+
+    });
 </file>
 
 <file path=".env.example">
@@ -9747,32 +10676,6 @@ return new class extends Migration
 };
 </file>
 
-<file path="database/seeders/DatabaseSeeder.php">
-<?php
-
-namespace Database\Seeders;
-
-use App\Models\User;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-
-class DatabaseSeeder extends Seeder
-{
-public function run(): void
-{
-    // USERS dulu
-    $this->call(UserSeeder::class); // atau seeder user lu
-
-    // GURU HARUS SEBELUM UJIAN
-    $this->call(GuruSeeder::class);
-
-    // BARU ujian + section
-    $this->call(DummyUjianSeeder::class);
-}
-
-}
-</file>
-
 <file path="resources/views/siswa/ujian/index.blade.php">
 <!DOCTYPE html>
 <html lang="id">
@@ -9984,265 +10887,189 @@ public function run(): void
 ```
 </file>
 
-<file path="resources/views/siswa/ujian/kerjakan.blade.php">
+<file path="resources/views/siswa/ujian/show.blade.php">
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Ujian Berlangsung - {{ $ujian->judul }}</title>
+    <title>Detail Ujian - {{ $ujian->judul }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .timer-warning { color: #ef4444; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        /* Radio Button Custom */
-        input[type="radio"]:checked + div {
-            background-color: #eff6ff; /* blue-50 */
-            border-color: #004e92;
-            color: #004e92;
-        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 
-<body class="bg-gray-100 font-sans flex text-slate-800 selection:bg-blue-100">
+<body class="bg-gray-100 font-sans flex text-slate-800">
 
-    {{-- SIDEBAR MINI (Biar fokus ujian) --}}
+    {{-- SIDEBAR --}}
     <div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50 shadow-xl">
-        <div class="text-white mb-4">
-            <i data-lucide="monitor" size="28"></i>
+        <div class="text-white mb-4 cursor-pointer hover:scale-110 transition duration-300">
+            <i data-lucide="menu" size="28"></i>
         </div>
-        
-        <div class="mt-auto mb-6 text-center">
-            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto text-white font-bold mb-2">
-                {{ substr(Auth::user()->username, 0, 1) }}
+
+        <a href="{{ route('siswa.dashboard') }}?page=home" 
+           class="p-3 rounded-xl cursor-pointer transition text-white/70 hover:text-white hover:bg-white/10"
+           title="Dashboard">
+            <i data-lucide="home" size="28"></i>
+        </a>
+
+        <a href="{{ route('siswa.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition bg-white/20 shadow-lg ring-1 ring-white/30 text-white"
+           title="Ujian">
+            <i data-lucide="edit-3" size="28"></i>
+        </a>
+
+        {{-- BAGIAN USER PROFILE & LOGOUT --}}
+        <div class="mt-auto flex flex-col gap-6 mb-4">
+            <div class="relative group">
+                {{-- Avatar --}}
+                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer border-2 border-transparent group-hover:border-white transition shadow-md">
+                    <span class="text-purple-700 font-bold uppercase">
+                        {{ substr(Auth::user()->username ?? 'S', 0, 1) }}
+                    </span>
+                </div>
+
+                {{-- Menu Logout (Muncul pas di-hover) --}}
+                <div class="hidden group-hover:block absolute left-10 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-50 animate-fade-in">
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="w-full text-left text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2">
+                            <i data-lucide="log-out" size="14"></i> Logout
+                        </button>
+                    </form>
+                </div>
             </div>
-            <span class="text-white/50 text-[10px]">SISWA</span>
         </div>
-    </div>
+    </div> 
 
     {{-- MAIN CONTENT --}}
-    <main class="flex-1 ml-20 p-6 min-h-screen">
+    <main class="flex-1 ml-20 p-8 min-h-screen transition-all">
 
-        {{-- HEADER: JUDUL & TIMER --}}
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 sticky top-4 z-40 flex justify-between items-center">
+        {{-- BREADCRUMB & BACK BUTTON --}}
+        <div class="mb-8 flex items-center gap-3">
+            <a href="{{ route('siswa.ujian.index') }}" class="p-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 text-gray-600 transition">
+                <i data-lucide="arrow-left" size="20"></i>
+            </a>
             <div>
-                <h1 class="font-bold text-lg text-gray-800">{{ $ujian->judul }}</h1>
-                <p class="text-gray-500 text-sm flex items-center gap-2">
-                    <span class="bg-blue-100 text-[#004e92] px-2 py-0.5 rounded text-xs font-bold uppercase">{{ $section->judul_section }}</span>
-                    <span>Section {{ $section->urutan }} dari {{ $ujian->sections->count() }}</span>
-                </p>
-            </div>
-
-            <div class="text-right">
-                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Sisa Waktu</p>
-                <div class="text-3xl font-mono font-bold text-gray-800" id="timer-display">
-                    00:00:00
-                </div>
+                <h1 class="text-2xl font-bold text-gray-800">Detail Ujian</h1>
+                <p class="text-gray-500 text-sm">Informasi lengkap sebelum memulai tes.</p>
             </div>
         </div>
 
-        {{-- SOAL LIST --}}
-        <div class="max-w-4xl mx-auto pb-20">
-            @php $isExpired = $sisaDetik <= 0; @endphp
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
+            
+            {{-- KOLOM KIRI: INFO UTAMA --}}
+            <div class="lg:col-span-2 space-y-6">
+                
+                {{-- CARD HEADER UJIAN --}}
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-6 opacity-5">
+                        <i data-lucide="file-check" size="120"></i>
+                    </div>
 
-            @forelse ($section->soal as $index => $soal)
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 transition hover:shadow-md">
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-3 py-1 bg-blue-100 text-[#004e92] text-xs font-bold rounded-full">
+                                EXAM
+                            </span>
+                            <span class="text-gray-400 text-sm flex items-center gap-1">
+                                <i data-lucide="clock" size="14"></i> {{ $ujian->durasi_menit }} Menit Total
+                            </span>
+                        </div>
+
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ $ujian->judul }}</h2>
+                        <p class="text-gray-600 leading-relaxed">
+                            {{ $ujian->deskripsi ?? 'Tidak ada deskripsi ujian.' }}
+                        </p>
+                    </div>
+                </div>
+
+                {{-- CARD LIST SECTION --}}
+                <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <i data-lucide="layers" size="20" class="text-[#004e92]"></i>
+                        Daftar Section Ujian
+                    </h3>
+
+                    <div class="space-y-4">
+                        @foreach ($ujian->sections as $section)
+                            @php
+                                $icon = match($section->tipe_section->value ?? 'default') {
+                                    'listening' => 'headphones',
+                                    'reading'   => 'book-open',
+                                    'structure' => 'pen-tool',
+                                    'writing'   => 'edit',
+                                    default     => 'file-text'
+                                };
+                            @endphp
+                            
+                            <div class="flex items-center p-4 bg-gray-50 rounded-xl border border-gray-100 hover:border-blue-200 transition group">
+                                <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center shadow-sm text-[#004e92] group-hover:scale-110 transition">
+                                    <i data-lucide="{{ $icon }}" size="24"></i>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <h4 class="font-bold text-gray-800 text-sm group-hover:text-[#004e92] transition">
+                                        {{ $section->judul_section }}
+                                    </h4>
+                                    <p class="text-xs text-gray-500 capitalize">{{ $section->tipe_section->value ?? 'Standard' }} Section</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block font-bold text-gray-700">{{ $section->durasi_menit }}</span>
+                                    <span class="text-xs text-gray-400">Menit</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            {{-- KOLOM KANAN: CTA --}}
+            <div class="lg:col-span-1">
+                <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-100 sticky top-8">
+                    <h3 class="font-bold text-gray-800 mb-4">Persiapan</h3>
                     
-                    {{-- Pertanyaan --}}
-                    <div class="flex gap-4 mb-6">
-                        <div class="flex-shrink-0 w-10 h-10 bg-[#004e92] text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
-                            {{ $soal->nomor_urut }}
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-lg text-gray-800 leading-relaxed font-medium">
-                                {{ $soal->pertanyaan }}
-                            </p>
-                        </div>
-                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-start gap-3 text-sm text-gray-600">
+                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
+                            Pastikan koneksi internet stabil.
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-gray-600">
+                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
+                            Gunakan headset untuk sesi Listening.
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-gray-600">
+                            <i data-lucide="check-circle" size="18" class="text-green-500 shrink-0 mt-0.5"></i>
+                            Dilarang pindah tab (Auto-lock aktif).
+                        </li>
+                    </ul>
 
-                    {{-- Opsi Jawaban --}}
-                    <div class="space-y-3 ml-14">
-                        @if ($soal->isPilihanGanda())
-                            @foreach ($soal->opsi_jawaban as $key => $label)
-                                <label class="cursor-pointer block group">
-                                    <input type="radio" 
-                                           name="jawaban_{{ $soal->id }}" 
-                                           value="{{ $key }}" 
-                                           class="peer sr-only"
-                                           @checked(isset($jawabanSiswa[$soal->id]) && $jawabanSiswa[$soal->id]->jawaban_pilihan === $key)
-                                           @disabled($isExpired)
-                                           onchange="simpanJawaban({{ $soal->id }}, '{{ $key }}')">
-                                    
-                                    <div class="flex items-center p-4 bg-gray-50 border-2 border-transparent rounded-xl transition-all hover:bg-gray-100 peer-focus:ring-2 peer-focus:ring-blue-200">
-                                        <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold text-gray-400 mr-4 group-hover:border-[#004e92] group-hover:text-[#004e92] peer-checked:bg-[#004e92] peer-checked:border-[#004e92] peer-checked:text-white transition">
-                                            {{ $key }}
-                                        </div>
-                                        <span class="text-gray-700 font-medium">{{ $label }}</span>
-                                    </div>
-                                </label>
-                            @endforeach
-                        @else
-                            {{-- ESSAY --}}
-                            <textarea 
-                                class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-[#004e92] focus:ring-4 focus:ring-blue-500/10 transition"
-                                rows="5"
-                                placeholder="{{ $isExpired ? 'Waktu habis...' : 'Ketik jawaban Anda di sini...' }}"
-                                @disabled($isExpired)
-                                oninput="debounceSimpan({{ $soal->id }}, this.value)"
-                            >{{ $jawabanSiswa[$soal->id]->jawaban_essay ?? '' }}</textarea>
-                        @endif
+                    <div class="pt-6 border-t border-gray-100">
+                        <a href="{{ route('siswa.ujian.akses') }}" 
+                           class="w-full flex justify-center items-center gap-2 py-4 bg-[#004e92] hover:bg-[#003d73] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95">
+                            Mulai Ujian <i data-lucide="arrow-right" size="20"></i>
+                        </a>
+                        <p class="text-xs text-center text-gray-400 mt-3">
+                            Anda akan diminta memasukkan Token.
+                        </p>
                     </div>
                 </div>
-            @empty
-                <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                    <i data-lucide="file-question" class="mx-auto text-gray-300 mb-4" size="48"></i>
-                    <p class="text-gray-500">Tidak ada soal di section ini.</p>
-                </div>
-            @endforelse
-        </div>
-
-        {{-- FOOTER NAVIGATION --}}
-        <div class="fixed bottom-0 left-20 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-between items-center z-50">
-            <div class="text-sm text-gray-500">
-                Jawab semua soal sebelum melanjutkan.
             </div>
 
-            @if (! $isExpired)
-                <button type="button"
-                        id="btn-submit-manual"
-                        data-submit-url="{{ route('siswa.ujian.submitSection') }}"
-                        data-sesi-id="{{ $sesi->id }}"
-                        onclick="autoSubmitSection()"
-                        class="flex items-center gap-2 bg-[#004e92] hover:bg-[#003d73] text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95">
-                    Lanjut Section Berikutnya
-                    <i data-lucide="arrow-right" size="20"></i>
-                </button>
-            @else
-                <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-8 rounded-xl cursor-not-allowed">
-                    Waktu Habis
-                </button>
-            @endif
         </div>
+
+        <footer class="text-center mt-12 pb-6 text-gray-400 text-xs">
+            &copy; {{ date('Y') }} CBT Al-Ma'soem. All rights reserved.
+        </footer>
 
     </main>
 
-    {{-- SCRIPT LOGIC (Timer & Autosave) --}}
     <script>
         lucide.createIcons();
-
-        /* ================= STATE ================= */
-        let sisaDetik = {{ $sisaDetik }};
-        const timerDisplay = document.getElementById('timer-display');
-        let debounceTimer = {};
-        let sudahSubmit = false;
-
-        /* ================= FORMAT TIME ================= */
-        function formatTime(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            const s = seconds % 60;
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        }
-
-        /* ================= AUTOSAVE JAWABAN ================= */
-        function simpanJawaban(soalId, jawaban) {
-            fetch("{{ route('siswa.ujian.simpanJawaban') }}", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    sesi_id: {{ $sesi->id }},
-                    soal_id: soalId,
-                    jawaban: jawaban
-                })
-            }).then(res => {
-                if(res.ok) console.log('Saved'); 
-            }).catch(err => console.error('Gagal save', err));
-        }
-
-        /* ================= DEBOUNCE ESSAY ================= */
-        function debounceSimpan(soalId, jawaban) {
-            clearTimeout(debounceTimer[soalId]);
-            debounceTimer[soalId] = setTimeout(() => {
-                simpanJawaban(soalId, jawaban);
-            }, 800); // Delay 800ms biar server gak jedag jedug
-        }
-
-        /* ================= SUBMIT SECTION ================= */
-        window.autoSubmitSection = function () {
-            if (sudahSubmit) return;
-            sudahSubmit = true;
-
-            const btn = document.getElementById('btn-submit-manual');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Memproses...';
-                lucide.createIcons();
-            }
-
-            const url = btn.dataset.submitUrl;
-            const sesiId = btn.dataset.sesiId;
-
-            fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ sesi_id: sesiId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                sudahSubmit = false;
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerText = 'Coba Lagi';
-                }
-                alert('Gagal submit section. Cek koneksi internet.');
-            });
-        };
-
-        /* ================= TIMER LOGIC ================= */
-        if (timerDisplay) {
-            timerDisplay.innerText = formatTime(sisaDetik); // Init
-
-            const interval = setInterval(() => {
-                sisaDetik--;
-
-                if (sisaDetik <= 0) {
-                    sisaDetik = 0;
-                    clearInterval(interval);
-                    timerDisplay.innerText = "00:00:00";
-                    timerDisplay.classList.add('text-red-600');
-                    
-                    // Disable inputs
-                    document.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
-                    
-                    // Force submit
-                    autoSubmitSection();
-                } else {
-                    timerDisplay.innerText = formatTime(sisaDetik);
-                    // Warning warna merah kalau < 5 menit
-                    if (sisaDetik < 300) {
-                        timerDisplay.classList.add('timer-warning');
-                    }
-                }
-            }, 1000);
-        }
     </script>
 </body>
 </html>
@@ -10428,120 +11255,6 @@ enum TipeSoal: string
     public function hasAudio(): bool
     {
         return $this === self::LISTENING;
-    }
-}
-</file>
-
-<file path="app/Http/Controllers/AuthController.php">
-<?php
-
-declare(strict_types=1);
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\{RedirectResponse, Request};
-use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
-use App\Models\User;
-
-class AuthController extends Controller
-{
-    /**
-     * Tampilkan halaman login
-     */
-    public function showLoginForm(): View
-    {
-        return view('auth.login');
-    }
-
-    /**
-     * Proses login dengan validasi role
-     */
-public function login(Request $request): RedirectResponse
-{
-    $request->validate([
-        'username' => 'required|string',
-        'password' => 'required|string',
-        'role' => 'nullable|in:siswa,guru,admin',
-    ], [
-        'username.required' => 'Username/NIS wajib diisi',
-        'password.required' => 'Password wajib diisi',
-    ]);
-
-    $login = $request->username;
-
-    // 1. Cari user
-    $user = User::where('username', $login)
-        ->orWhere('email', $login)
-        ->first();
-
-    if (! $user) {
-        return back()->withErrors([
-            'username' => 'NIS / Username tidak ditemukan',
-        ]);
-    }
-
-    // 2. Cek aktif SEBELUM dianggap login sah
-    if (! $user->is_active) {
-        return back()->withErrors([
-            'username' => 'Akun tidak aktif',
-        ]);
-    }
-
-    // 3. Auth (tanpa role)
-    if (! Auth::attempt([
-        'username' => $user->username,
-        'password' => $request->password,
-    ])) {
-        return back()->withErrors([
-            'password' => 'Password salah',
-        ]);
-    }
-
-    // 4. Session baru dianggap sah DI SINI
-    $request->session()->regenerate();
-
-    // 5. Validasi role opsional
-    if ($request->filled('role') && $user->role->value !== $request->role) {
-        Auth::logout();
-        return back()->withErrors([
-            'role' => 'Role tidak sesuai dengan akun',
-        ]);
-    }
-
-    // 6. Redirect sesuai role
-    return $this->redirectToDashboard($user->role);
-}
-
-    /**
-     * Logout user
-     */
-    public function logout(Request $request): RedirectResponse
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')
-            ->with('success', 'Anda berhasil logout');
-    }
-
-    /**
-     * Redirect ke dashboard sesuai role
-     * FIX: Hapus type hint 
-     */
-    private function redirectToDashboard($role): RedirectResponse
-    {
-        // LOGIC FIX:
-        // Kalau $role itu String biasa, ya pake langsung.
-        $roleName = (is_object($role) && isset($role->value)) ? $role->value : $role;
-
-        return match($roleName) {
-            'siswa' => redirect()->route('siswa.dashboard'),
-            'guru' => redirect()->route('guru.dashboard'),
-            'admin' => redirect()->route('admin.dashboard'),
-            default => redirect()->route('landing'),
-        };
     }
 }
 </file>
@@ -11072,6 +11785,27 @@ class User extends Authenticatable
 }
 </file>
 
+<file path="database/seeders/DatabaseSeeder.php">
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->call([
+            UserSeeder::class,       // Bikin Admin & User dasar
+            GuruSeeder::class,       // Bikin Data Guru (Wajib sebelum Ujian)
+            DummyUjianSeeder::class, // Bikin Ujian & Soal Dummy
+            SiswaSeeder::class,      // Bikin Siswa Dummy (2025001)
+        ]);
+    }
+}
+</file>
+
 <file path="resources/views/auth/login.blade.php">
 <!DOCTYPE html>
 <html lang="id">
@@ -11143,6 +11877,270 @@ class User extends Authenticatable
 
     <script>lucide.createIcons();</script>
 
+</body>
+</html>
+</file>
+
+<file path="resources/views/siswa/ujian/kerjakan.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Ujian Berlangsung - {{ $ujian->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .timer-warning { color: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* Radio Button Custom */
+        input[type="radio"]:checked + div {
+            background-color: #eff6ff; /* blue-50 */
+            border-color: #004e92;
+            color: #004e92;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans flex text-slate-800 selection:bg-blue-100">
+
+    {{-- SIDEBAR MINI (Biar fokus ujian) --}}
+    <div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50 shadow-xl">
+        <div class="text-white mb-4">
+            <i data-lucide="monitor" size="28"></i>
+        </div>
+        
+        <div class="mt-auto mb-6 text-center">
+            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mx-auto text-white font-bold mb-2">
+                {{ substr(Auth::user()->username, 0, 1) }}
+            </div>
+            <span class="text-white/50 text-[10px]">SISWA</span>
+        </div>
+    </div>
+
+    {{-- MAIN CONTENT --}}
+    <main class="flex-1 ml-20 p-6 min-h-screen">
+
+        {{-- HEADER: JUDUL & TIMER --}}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 sticky top-4 z-40 flex justify-between items-center">
+            <div>
+                <h1 class="font-bold text-lg text-gray-800">{{ $ujian->judul }}</h1>
+                <p class="text-gray-500 text-sm flex items-center gap-2">
+                    <span class="bg-blue-100 text-[#004e92] px-2 py-0.5 rounded text-xs font-bold uppercase">{{ $section->judul_section }}</span>
+                    <span>Section {{ $section->urutan }} dari {{ $ujian->sections->count() }}</span>
+                </p>
+            </div>
+
+            <div class="text-right">
+                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Sisa Waktu</p>
+                <div class="text-3xl font-mono font-bold text-gray-800" id="timer-display">
+                    00:00:00
+                </div>
+            </div>
+        </div>
+
+        {{-- SOAL LIST --}}
+        <div class="max-w-4xl mx-auto pb-20">
+            @php $isExpired = $sisaDetik <= 0; @endphp
+
+            @forelse ($section->soal as $index => $soal)
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 transition hover:shadow-md">
+                    
+                    {{-- Pertanyaan --}}
+                    <div class="flex gap-4 mb-6">
+                        <div class="flex-shrink-0 w-10 h-10 bg-[#004e92] text-white rounded-lg flex items-center justify-center font-bold text-lg shadow-sm">
+                            {{ $soal->nomor_urut }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-lg text-gray-800 leading-relaxed font-medium">
+                                {{ $soal->pertanyaan }}
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Opsi Jawaban --}}
+                    <div class="space-y-3 ml-14">
+                        @if ($soal->isPilihanGanda())
+                            @foreach ($soal->opsi_jawaban as $key => $label)
+                                <label class="cursor-pointer block group">
+                                    <input type="radio" 
+                                           name="jawaban_{{ $soal->id }}" 
+                                           value="{{ $key }}" 
+                                           class="peer sr-only"
+                                           @checked(isset($jawabanSiswa[$soal->id]) && $jawabanSiswa[$soal->id]->jawaban_pilihan === $key)
+                                           @disabled($isExpired)
+                                           onchange="simpanJawaban({{ $soal->id }}, '{{ $key }}')">
+                                    
+                                    <div class="flex items-center p-4 bg-gray-50 border-2 border-transparent rounded-xl transition-all hover:bg-gray-100 peer-focus:ring-2 peer-focus:ring-blue-200">
+                                        <div class="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center font-bold text-gray-400 mr-4 group-hover:border-[#004e92] group-hover:text-[#004e92] peer-checked:bg-[#004e92] peer-checked:border-[#004e92] peer-checked:text-white transition">
+                                            {{ $key }}
+                                        </div>
+                                        <span class="text-gray-700 font-medium">{{ $label }}</span>
+                                    </div>
+                                </label>
+                            @endforeach
+                        @else
+                            {{-- ESSAY --}}
+                            <textarea 
+                                class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 focus:outline-none focus:border-[#004e92] focus:ring-4 focus:ring-blue-500/10 transition"
+                                rows="5"
+                                placeholder="{{ $isExpired ? 'Waktu habis...' : 'Ketik jawaban Anda di sini...' }}"
+                                @disabled($isExpired)
+                                oninput="debounceSimpan({{ $soal->id }}, this.value)"
+                            >{{ $jawabanSiswa[$soal->id]->jawaban_essay ?? '' }}</textarea>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                    <i data-lucide="file-question" class="mx-auto text-gray-300 mb-4" size="48"></i>
+                    <p class="text-gray-500">Tidak ada soal di section ini.</p>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- FOOTER NAVIGATION --}}
+        <div class="fixed bottom-0 left-20 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex justify-between items-center z-50">
+            <div class="text-sm text-gray-500">
+                Jawab semua soal sebelum melanjutkan.
+            </div>
+
+            @if (! $isExpired)
+                <button type="button"
+                        id="btn-submit-manual"
+                        data-submit-url="{{ route('siswa.ujian.submitSection') }}"
+                        data-sesi-id="{{ $sesi->id }}"
+                        onclick="autoSubmitSection()"
+                        class="flex items-center gap-2 bg-[#004e92] hover:bg-[#003d73] text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:shadow-xl transition transform active:scale-95">
+                    Lanjut Section Berikutnya
+                    <i data-lucide="arrow-right" size="20"></i>
+                </button>
+            @else
+                <button disabled class="bg-gray-300 text-gray-500 font-bold py-3 px-8 rounded-xl cursor-not-allowed">
+                    Waktu Habis
+                </button>
+            @endif
+        </div>
+
+    </main>
+
+    {{-- SCRIPT LOGIC (Timer & Autosave) --}}
+    <script>
+        lucide.createIcons();
+
+        /* ================= STATE ================= */
+        let sisaDetik = {{ $sisaDetik }};
+        const timerDisplay = document.getElementById('timer-display');
+        let debounceTimer = {};
+        let sudahSubmit = false;
+
+        /* ================= FORMAT TIME ================= */
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        /* ================= AUTOSAVE JAWABAN ================= */
+        function simpanJawaban(soalId, jawaban) {
+            fetch("{{ route('siswa.ujian.simpanJawaban') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    sesi_id: {{ $sesi->id }},
+                    soal_id: soalId,
+                    jawaban: jawaban
+                })
+            }).then(res => {
+                if(res.ok) console.log('Saved'); 
+            }).catch(err => console.error('Gagal save', err));
+        }
+
+        /* ================= DEBOUNCE ESSAY ================= */
+        function debounceSimpan(soalId, jawaban) {
+            clearTimeout(debounceTimer[soalId]);
+            debounceTimer[soalId] = setTimeout(() => {
+                simpanJawaban(soalId, jawaban);
+            }, 800); // Delay 800ms biar server gak jedag jedug
+        }
+
+        /* ================= SUBMIT SECTION ================= */
+        window.autoSubmitSection = function () {
+            if (sudahSubmit) return;
+            sudahSubmit = true;
+
+            const btn = document.getElementById('btn-submit-manual');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Memproses...';
+                lucide.createIcons();
+            }
+
+            const url = btn.dataset.submitUrl;
+            const sesiId = btn.dataset.sesiId;
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({ sesi_id: sesiId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                sudahSubmit = false;
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerText = 'Coba Lagi';
+                }
+                alert('Gagal submit section. Cek koneksi internet.');
+            });
+        };
+
+        /* ================= TIMER LOGIC ================= */
+        if (timerDisplay) {
+            timerDisplay.innerText = formatTime(sisaDetik); // Init
+
+            const interval = setInterval(() => {
+                sisaDetik--;
+
+                if (sisaDetik <= 0) {
+                    sisaDetik = 0;
+                    clearInterval(interval);
+                    timerDisplay.innerText = "00:00:00";
+                    timerDisplay.classList.add('text-red-600');
+                    
+                    // Disable inputs
+                    document.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+                    
+                    // Force submit
+                    autoSubmitSection();
+                } else {
+                    timerDisplay.innerText = formatTime(sisaDetik);
+                    // Warning warna merah kalau < 5 menit
+                    if (sisaDetik < 300) {
+                        timerDisplay.classList.add('timer-warning');
+                    }
+                }
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
 </file>
@@ -11469,6 +12467,119 @@ class DashboardController extends Controller
             'sesiTerakhir'   => $sesiTerakhir,
             'ujianAktif'     => $ujianAktif, 
         ]);
+    }
+}
+</file>
+
+<file path="app/Http/Controllers/AuthController.php">
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\{RedirectResponse, Request};
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+use App\Models\User;
+
+class AuthController extends Controller
+{
+    /**
+     * Tampilkan halaman login
+     */
+    public function showLoginForm(): View
+    {
+        return view('auth.login');
+    }
+
+    /**
+     * Proses login TANPA validasi role manual (Otomatis deteksi)
+     */
+    public function login(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+            // 'role' => 'nullable|in:siswa,guru,admin', // Gak perlu validasi role di request
+        ], [
+            'username.required' => 'Username/NIS wajib diisi',
+            'password.required' => 'Password wajib diisi',
+        ]);
+
+        $login = $request->username;
+
+        // 1. Cari user
+        $user = User::where('username', $login)
+            ->orWhere('email', $login)
+            ->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'username' => 'NIS / Username tidak ditemukan',
+            ]);
+        }
+
+        // 2. Cek aktif SEBELUM dianggap login sah
+        if (! $user->is_active) {
+            return back()->withErrors([
+                'username' => 'Akun tidak aktif',
+            ]);
+        }
+
+        // 3. Auth (tanpa role)
+        if (! Auth::attempt([
+            'username' => $user->username,
+            'password' => $request->password,
+        ])) {
+            return back()->withErrors([
+                'password' => 'Password salah',
+            ]);
+        }
+
+        // 4. Session baru dianggap sah DI SINI
+        $request->session()->regenerate();
+
+        // 5. Validasi role DIBUANG SAJA biar gak error salah pilih
+        // if ($request->filled('role') && $user->role->value !== $request->role) {
+        //     Auth::logout();
+        //     return back()->withErrors([
+        //         'role' => 'Role tidak sesuai dengan akun',
+        //     ]);
+        // }
+
+        // 6. Redirect sesuai role (Sistem otomatis tau dia siapa dari database)
+        return $this->redirectToDashboard($user->role);
+    }
+
+    /**
+     * Logout user
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Anda berhasil logout');
+    }
+
+    /**
+     * Redirect ke dashboard sesuai role
+     */
+    private function redirectToDashboard($role): RedirectResponse
+    {
+        // LOGIC FIX:
+        // Kalau $role itu String biasa, ya pake langsung.
+        $roleName = (is_object($role) && isset($role->value)) ? $role->value : $role;
+
+        return match($roleName) {
+            'siswa' => redirect()->route('siswa.dashboard'),
+            'guru' => redirect()->route('guru.dashboard'),
+            'admin' => redirect()->route('admin.dashboard'),
+            default => redirect()->route('landing'),
+        };
     }
 }
 </file>
@@ -11847,195 +12958,6 @@ public function ujianSection(): BelongsTo
 }
 </file>
 
-<file path="app/Models/TokenUjian.php">
-<?php
-
-declare(strict_types=1);
-
-namespace App\Models;
-
-use App\Enums\StatusUjian;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str; 
-
-class TokenUjian extends Model
-{
-    use HasFactory, SoftDeletes;
-
-    protected $table = 'token_ujian';
-
-    protected $fillable = [
-        'ujian_id',
-        'kode_token',
-        'kuota_pemakaian',
-        'jumlah_terpakai',
-        'berlaku_dari',
-        'berlaku_sampai',
-        'is_active',
-        'dibuat_oleh',
-        'ip_address',
-        'last_used_at',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'kuota_pemakaian' => 'integer',
-            'jumlah_terpakai' => 'integer',
-            'berlaku_dari'    => 'datetime',
-            'berlaku_sampai'  => 'datetime',
-            'is_active'       => 'boolean',
-            'last_used_at'    => 'datetime',
-        ];
-    }
-
-    /* ================= RELATIONS ================= */
-
-    public function ujian(): BelongsTo
-    {
-        return $this->belongsTo(Ujian::class);
-    }
-
-    public function siswaYangMemakai(): BelongsToMany
-    {
-        return $this->belongsToMany(Siswa::class, 'token_ujian_usage')
-            ->withPivot(['sesi_ujian_id', 'ip_address', 'digunakan_pada'])
-            ->withTimestamps();
-    }
-
-    public function usageLogs(): HasMany
-    {
-        return $this->hasMany(TokenUjianUsage::class);
-    }
-
-    /* ================= SCOPE ================= */
-
-    public function scopeAktifDanValid($query)
-    {
-        return $query
-            ->where('is_active', true)
-            ->where('berlaku_dari', '<=', now())
-            ->where('berlaku_sampai', '>=', now())
-            ->whereRaw('COALESCE(jumlah_terpakai, 0) < kuota_pemakaian');
-    }
-
-    /* ================= HELPER (TAMBAHAN BARU) ================= */
-
-    /**
-     * Helper: Generate token unik 6 digit
-     */
-    public static function generateKodeToken(): string
-    {
-        do {
-            // Bikin 6 karakter random uppercase
-            $token = strtoupper(Str::random(6));
-            
-            // Cek di DB biar gak duplikat
-        } while (self::where('kode_token', $token)->exists());
-
-        return $token;
-    }
-
-    /* ================= VALIDASI TOKEN (HANYA UNTUK SESI BARU) ================= */
-
-    private function validasiUntukSesiBaru(Siswa $siswa): void
-    {
-        if (! $this->is_active) {
-            throw new \Exception('Token sudah dinonaktifkan');
-        }
-
-        if (now()->lessThan($this->berlaku_dari)) {
-            throw new \Exception('Token belum bisa digunakan');
-        }
-
-        if (now()->greaterThan($this->berlaku_sampai)) {
-            throw new \Exception('Token sudah kadaluarsa');
-        }
-
-        $token = self::where('id', $this->id)->lockForUpdate()->first();
-
-        if ($token->jumlah_terpakai >= $token->kuota_pemakaian) {
-            throw new \Exception('Kuota token sudah habis');
-        }
-
-        $sudahPakai = DB::table('token_ujian_usage')
-            ->where('token_ujian_id', $this->id)
-            ->where('siswa_id', $siswa->id)
-            ->exists();
-
-        if ($sudahPakai) {
-            throw new \Exception('Anda sudah menggunakan token ini sebelumnya');
-        }
-    }
-
-    /* ================= CORE ================= */
-
-    /**
-     * IDPOTENT
-     * - Kalau sesi masih ada → resume
-     * - Kalau tidak ada → buat baru
-     */
-    public function gunakanToken(
-        Siswa $siswa,
-        string $ipAddress,
-        string $userAgent
-    ): SesiUjian {
-        return DB::transaction(function () use ($siswa, $ipAddress, $userAgent) {
-
-            // 1️⃣ RESUME SESI AKTIF
-            $sesiAktif = SesiUjian::where('ujian_id', $this->ujian_id)
-                ->where('siswa_id', $siswa->id)
-                ->whereIn('status', [
-                    StatusUjian::BELUM_MULAI,
-                    StatusUjian::SEDANG_MENGERJAKAN,
-                ])
-                ->lockForUpdate()
-                ->first();
-
-            if ($sesiAktif) {
-                return $sesiAktif;
-            }
-
-            // 2️⃣ VALIDASI TOKEN (KHUSUS SESI BARU)
-            $this->validasiUntukSesiBaru($siswa);
-
-            // 3️⃣ AMANKAN TOKEN
-            $this->increment('jumlah_terpakai');
-            $this->update(['last_used_at' => now()]);
-
-            // 4️⃣ BUAT SESI BARU
-            $sesi = SesiUjian::create([
-                'ujian_id'              => $this->ujian_id,
-                'siswa_id'              => $siswa->id,
-                'status'                => StatusUjian::SEDANG_MENGERJAKAN,
-                'current_section_index' => 0,
-                'section_mulai_at'      => now(),
-                'waktu_mulai'           => now(),
-                'ip_address'            => $ipAddress,
-                'user_agent'            => $userAgent,
-            ]);
-
-            DB::table('token_ujian_usage')->insert([
-                'token_ujian_id' => $this->id,
-                'siswa_id'       => $siswa->id,
-                'sesi_ujian_id'  => $sesi->id,
-                'ip_address'     => $ipAddress,
-                'user_agent'     => $userAgent,
-                'digunakan_pada' => now(),
-            ]);
-
-            return $sesi;
-        });
-    }
-}
-</file>
-
 <file path="bootstrap/app.php">
 <?php
 
@@ -12354,6 +13276,195 @@ return Application::configure(basePath: dirname(__DIR__))
     
 </body>
 </html>
+</file>
+
+<file path="app/Models/TokenUjian.php">
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use App\Enums\StatusUjian;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str; 
+
+class TokenUjian extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'token_ujian';
+
+    protected $fillable = [
+        'ujian_id',
+        'kode_token',
+        'kuota_pemakaian',
+        'jumlah_terpakai',
+        'berlaku_dari',
+        'berlaku_sampai',
+        'is_active',
+        'dibuat_oleh',
+        'ip_address',
+        'last_used_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'kuota_pemakaian' => 'integer',
+            'jumlah_terpakai' => 'integer',
+            'berlaku_dari'    => 'datetime',
+            'berlaku_sampai'  => 'datetime',
+            'is_active'       => 'boolean',
+            'last_used_at'    => 'datetime',
+        ];
+    }
+
+    /* ================= RELATIONS ================= */
+
+    public function ujian(): BelongsTo
+    {
+        return $this->belongsTo(Ujian::class);
+    }
+
+    public function siswaYangMemakai(): BelongsToMany
+    {
+        return $this->belongsToMany(Siswa::class, 'token_ujian_usage')
+            ->withPivot(['sesi_ujian_id', 'ip_address', 'digunakan_pada'])
+            ->withTimestamps();
+    }
+
+    public function usageLogs(): HasMany
+    {
+        return $this->hasMany(TokenUjianUsage::class);
+    }
+
+    /* ================= SCOPE ================= */
+
+    public function scopeAktifDanValid($query)
+    {
+        return $query
+            ->where('is_active', true)
+            ->where('berlaku_dari', '<=', now())
+            ->where('berlaku_sampai', '>=', now())
+            ->whereRaw('COALESCE(jumlah_terpakai, 0) < kuota_pemakaian');
+    }
+
+    /* ================= HELPER (TAMBAHAN BARU) ================= */
+
+    /**
+     * Helper: Generate token unik 6 digit
+     */
+    public static function generateKodeToken(): string
+    {
+        do {
+            // Bikin 6 karakter random uppercase
+            $token = strtoupper(Str::random(6));
+            
+            // Cek di DB biar gak duplikat
+        } while (self::where('kode_token', $token)->exists());
+
+        return $token;
+    }
+
+    /* ================= VALIDASI TOKEN (HANYA UNTUK SESI BARU) ================= */
+
+    private function validasiUntukSesiBaru(Siswa $siswa): void
+    {
+        if (! $this->is_active) {
+            throw new \Exception('Token sudah dinonaktifkan');
+        }
+
+        if (now()->lessThan($this->berlaku_dari)) {
+            throw new \Exception('Token belum bisa digunakan');
+        }
+
+        if (now()->greaterThan($this->berlaku_sampai)) {
+            throw new \Exception('Token sudah kadaluarsa');
+        }
+
+        $token = self::where('id', $this->id)->lockForUpdate()->first();
+
+        if ($token->jumlah_terpakai >= $token->kuota_pemakaian) {
+            throw new \Exception('Kuota token sudah habis');
+        }
+
+        $sudahPakai = DB::table('token_ujian_usage')
+            ->where('token_ujian_id', $this->id)
+            ->where('siswa_id', $siswa->id)
+            ->exists();
+
+        if ($sudahPakai) {
+            throw new \Exception('Anda sudah menggunakan token ini sebelumnya');
+        }
+    }
+
+    /* ================= CORE ================= */
+
+    /**
+     * IDPOTENT
+     * - Kalau sesi masih ada → resume
+     * - Kalau tidak ada → buat baru
+     */
+    public function gunakanToken(
+        Siswa $siswa,
+        string $ipAddress,
+        string $userAgent
+    ): SesiUjian {
+        return DB::transaction(function () use ($siswa, $ipAddress, $userAgent) {
+
+            // 1️⃣ RESUME SESI AKTIF
+            $sesiAktif = SesiUjian::where('ujian_id', $this->ujian_id)
+                ->where('siswa_id', $siswa->id)
+                ->whereIn('status', [
+                    StatusUjian::BELUM_MULAI,
+                    StatusUjian::SEDANG_MENGERJAKAN,
+                ])
+                ->lockForUpdate()
+                ->first();
+
+            if ($sesiAktif) {
+                return $sesiAktif;
+            }
+
+            // 2️⃣ VALIDASI TOKEN (KHUSUS SESI BARU)
+            $this->validasiUntukSesiBaru($siswa);
+
+            // 3️⃣ AMANKAN TOKEN
+            $this->increment('jumlah_terpakai');
+            $this->update(['last_used_at' => now()]);
+
+            // 4️⃣ BUAT SESI BARU
+            $sesi = SesiUjian::create([
+                'ujian_id'              => $this->ujian_id,
+                'siswa_id'              => $siswa->id,
+                'status'                => StatusUjian::SEDANG_MENGERJAKAN,
+                'current_section_index' => 0,
+                'section_mulai_at'      => now(),
+                'waktu_mulai'           => now(),
+                'ip_address'            => $ipAddress,
+                'user_agent'            => $userAgent,
+            ]);
+
+            DB::table('token_ujian_usage')->insert([
+                'token_ujian_id' => $this->id,
+                'siswa_id'       => $siswa->id,
+                'sesi_ujian_id'  => $sesi->id,
+                'ip_address'     => $ipAddress,
+                'user_agent'     => $userAgent,
+                'digunakan_pada' => now(),
+            ]);
+
+            return $sesi;
+        });
+    }
+}
 </file>
 
 <file path="routes/web.php">

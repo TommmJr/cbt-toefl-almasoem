@@ -37,11 +37,11 @@
             <i data-lucide="file-text" size="28" class="text-white"></i>
         </a>
 
-        <a href="{{ route('guru.stats') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-
+      <a href="#" 
+            onclick="alert('Fitur Statistik segera hadir!')"
+            class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+                <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+            </a>
     @else
         {{-- Siswa Navigation --}}
         <a href="{{ route('siswa.dashboard') }}" 
@@ -86,9 +86,12 @@
                  style="display: none;">
                 
                 <div class="text-xs text-gray-500 px-3 pb-2 border-b mb-2">
-                    <div class="font-semibold text-gray-700">{{ auth()->user()->name }}</div>
-                    <div class="text-[10px]">{{ ucfirst(auth()->user()->role) }}</div>
-                </div>
+            {{-- Pastikan atribut nama sesuai database, biasanya name atau username --}}
+            <div class="font-semibold text-gray-700">{{ auth()->user()->username ?? auth()->user()->name }}</div>
+            
+            {{-- FIX: Tambahkan ->value karena role adalah Enum --}}
+            <div class="text-[10px]">{{ ucfirst(auth()->user()->role->value) }}</div>
+            </div>
 
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf

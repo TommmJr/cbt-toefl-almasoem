@@ -10,10 +10,16 @@ class GuruSeeder extends Seeder
 {
     public function run(): void
     {
-        $userGuru = User::where('role', 'guru')->first();
+        // Cari user spesifik berdasarkan username yang dibuat di UserSeeder
+        $userGuru = User::where('username', 'gurubahasa')->first();
+
+        // Fallback jika tidak ketemu username, cari berdasarkan role
+        if (! $userGuru) {
+            $userGuru = User::where('role', 'guru')->first();
+        }
 
         if (! $userGuru) {
-            throw new \Exception('Seeder error: User guru belum ada.');
+            throw new \Exception('Seeder error: User guru belum ada. Pastikan UserSeeder dijalankan duluan.');
         }
 
         Guru::firstOrCreate(
