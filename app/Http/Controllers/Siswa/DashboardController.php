@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -23,12 +24,38 @@ class DashboardController extends Controller
             abort(401, 'Unauthorized');
         }
 
-        // 2. Page Param (Aman Buat Sidebar / Tab)
-        $page = $request->query('page', 'home');
-
-        // 3. Ambil Data Siswa (Defensive)
+        // 3. Ambil Data Siswa (Pindah ke atas biar bisa dipake buat cek ujian)
         $siswa = Siswa::where('user_id', $user->id)->first();
         $siswaId = $siswa?->id;
+
+        // ==========================================================
+        // 🛡️ SATPAM UJIAN BASI (AUTO-FIX LOGIC)
+        // ==========================================================
+        if ($siswaId) {
+            // 1. AMBIL DATA DULU (Bagian ini tadi ketinggalan bang!)
+            $sesiLewatWaktu = SesiUjian::where('siswa_id', $siswaId)
+                ->where('waktu_selesai', '<', now()) // Cari yang waktunya dah abis
+                ->get();
+
+            // 2. BARU DI-LOOPING
+            foreach ($sesiLewatWaktu as $sesi) {
+                
+                // Cek Status pakai Enum (Biar gak error convert string)
+                if ($sesi->status !== \App\Enums\StatusUjian::SELESAI) {
+                    
+                    if (method_exists($sesi, 'hitungNilaiDanSelesai')) {
+                        $sesi->hitungNilaiDanSelesai();
+                    } else {
+                        // Fallback darurat
+                        $sesi->update(['status' => \App\Enums\StatusUjian::SELESAI]);
+                    }
+                }
+            }
+        }
+        // ==========================================================
+
+        // 2. Page Param (Aman Buat Sidebar / Tab)
+        $page = $request->query('page', 'home');
 
         // 4. Statistik (Semua Aman Walaupun Data Kosong)
         $totalAttempts = $siswaId
@@ -60,19 +87,38 @@ class DashboardController extends Controller
         $sesiTerakhir = $siswaId
             ? SesiUjian::with('ujian')
                 ->where('siswa_id', $siswaId)
-                ->where('status', 'selesai')
+                ->where('status', 'selesai') 
                 ->latest()
                 ->first()
             : null;
 
         // 7. Data Ujian Aktif (Untuk Tab Test)
-        // Ambil ujian yang Published DAN Waktunya Masuk Range (Aktif)
         $ujianAktif = Ujian::published()
             ->aktif() 
             ->orderBy('waktu_selesai', 'asc')
             ->get();
 
-        // 8. Render Dashboard
+        // ==========================================================
+        //  7.5. PREPARASI DATA UNTUK CHART (COLUMNS VERIFIED)
+        // ==========================================================
+        $chartData = [
+            'labels' => [],
+            'scores' => []
+        ];
+
+        if ($siswaId) {
+            $nilais = Nilai::where('siswa_id', $siswaId)
+                ->orderBy('created_at', 'asc') 
+                ->limit(10)
+                ->get();
+
+            foreach ($nilais as $n) {
+                // Pake created_at buat label tanggal di chart
+                $chartData['labels'][] = $n->created_at->format('d/m');
+                $chartData['scores'][] = $n->skor_total;
+            }
+        }
+        // 8. Render Dashboard 
         return view('siswa.dashboard', [
             'user'           => $user,
             'page'           => $page,
@@ -83,6 +129,7 @@ class DashboardController extends Controller
             'recentNilais'   => $recentNilais,
             'sesiTerakhir'   => $sesiTerakhir,
             'ujianAktif'     => $ujianAktif, 
+            'chartData'      => $chartData, 
         ]);
     }
 }

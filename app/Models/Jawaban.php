@@ -14,22 +14,12 @@ class Jawaban extends Model
 
     protected $table = 'jawaban';
 
-    protected $fillable = [
-        'sesi_ujian_id',
-        'soal_id',
-        'jawaban_pilihan',
-        'jawaban_essay',
-        'jumlah_kata',
-        'is_benar',
-        'skor',
-        'ai_score',
-        'ai_feedback',
-        'is_reviewed_by_teacher',
-        'teacher_score',
-        'teacher_feedback',
-        'waktu_jawab',
-        'is_locked',
-    ];
+    /**
+     * PENTING: Kita pakai guarded kosong / id saja.
+     * Ini biar gak kena error "Add [kolom] to fillable property" (Error 500).
+     * Jadi semua kolom selain 'id' boleh diisi otomatis.
+     */
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {
@@ -77,18 +67,18 @@ class Jawaban extends Model
             ->where('is_reviewed_by_teacher', false);
     }
 
-    /* ================= CORE SCORING (FASE 2) ================= */
+    /* ================= CORE SCORING ================= */
 
     /**
      * Auto nilai pilihan ganda
-     * - PG → auto-score
-     * - Essay → skip (aman)
+     * Digunakan jika penilaian dilakukan di model (opsional),
+     * tapi utamanya logic ini sudah ada di Controller simpanJawaban.
      */
     public function nilaiPilihanGanda(): void
     {
         $soal = $this->soal;
 
-        // Soal tidak valid / essay / tidak punya kunci
+        // Validasi: Kalau soal gak ada atau gak punya kunci jawaban
         if (! $soal || ! $soal->jawaban_benar) {
             $this->update([
                 'is_benar' => null,
@@ -97,9 +87,11 @@ class Jawaban extends Model
             return;
         }
 
+        // Bandingkan jawaban (Case Insensitive)
         $benar = strtoupper((string) $this->jawaban_pilihan)
               === strtoupper((string) $soal->jawaban_benar);
 
+        // Update skor pakai 'bobot_nilai' sesuai database
         $this->update([
             'is_benar' => $benar,
             'skor' => $benar ? $soal->bobot_nilai : 0,
@@ -139,6 +131,7 @@ class Jawaban extends Model
 
     public function isJumlahKataValid(): bool
     {
+        // Kalau soal gak ada aturan kata, anggap valid
         if (! $this->soal->min_kata && ! $this->soal->max_kata) {
             return true;
         }

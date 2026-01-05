@@ -15,125 +15,143 @@ class Soal extends Model
 {
     use HasFactory, SoftDeletes;
 
-    /**
-     * Nama tabel
-     */
     protected $table = 'soal';
-    /**
-     * Mass assignable attributes
-     */
-    protected $fillable = [
-        'ujian_section_id',
-        'nomor_urut',
-        'pertanyaan',
-        'tipe_soal',
 
-        'opsi_jawaban',
-        'jawaban_benar',
+    // PENTING: Ganti fillable jadi guarded biar kolom virtual (pilihan_a dll) bisa lewat
+    protected $guarded = ['id'];
 
-        'bobot_nilai',
-        'min_kata',
-        'max_kata',
-        'audio_path',
-        'audio_duration',
-        'passage',
-    ];
+    // Biar 'pilihan_a', 'pilihan_b' dst muncul pas data diambil (JSON/Array)
+    protected $appends = ['pilihan_a', 'pilihan_b', 'pilihan_c', 'pilihan_d', 'pilihan_e', 'kunci_jawaban', 'bobot'];
 
+    protected function casts(): array 
+    {
+        return [
+            'opsi_jawaban' => 'array',
+        ];
+    }
 
-        protected function casts(): array 
-        {
-            return [
-             'opsi_jawaban' => 'array',
-            ];
+    /* |==========================================================================
+    |  MUTATORS (Simpan Data: Controller -> Database)
+    |  Ini "jembatan" biar inputan 'pilihan_a' masuk ke JSON 'opsi_jawaban'
+    |========================================================================== */
+
+    // 1. Tangkap 'pilihan_a' -> Masukkan ke array opsi_jawaban['a']
+    public function setPilihanAAttribute($value) { $this->setOpsi('a', $value); }
+    public function setPilihanBAttribute($value) { $this->setOpsi('b', $value); }
+    public function setPilihanCAttribute($value) { $this->setOpsi('c', $value); }
+    public function setPilihanDAttribute($value) { $this->setOpsi('d', $value); }
+    public function setPilihanEAttribute($value) { $this->setOpsi('e', $value); }
+
+    // 2. Tangkap 'kunci_jawaban' -> Simpan ke kolom 'jawaban_benar'
+    public function setKunciJawabanAttribute($value)
+    {
+        $this->attributes['jawaban_benar'] = $value;
+    }
+
+    // 3. Tangkap 'bobot' -> Simpan ke kolom 'bobot_nilai'
+    public function setBobotAttribute($value)
+    {
+        $this->attributes['bobot_nilai'] = $value;
+    }
+
+    // Helper private buat update JSON Opsi
+    private function setOpsi($key, $value)
+    {
+        // Ambil data opsi yang ada (kalau belum ada, inisialisasi array)
+        $opsi = isset($this->attributes['opsi_jawaban']) 
+            ? json_decode($this->attributes['opsi_jawaban'], true) 
+            : [];
+            
+        if ($value) {
+            $opsi[$key] = $value;
+        } else {
+            unset($opsi[$key]);
         }
 
-    /**
-     * Relasi ke jawaban siswa (1:many)
-     */
+        $this->attributes['opsi_jawaban'] = json_encode($opsi);
+    }
+
+    /* |==========================================================================
+    |  ACCESSORS (Ambil Data: Database -> View)
+    |  Ini biar di View bisa panggil $soal->pilihan_a, $soal->bobot, dll
+    |========================================================================== */
+
+    public function getPilihanAAttribute() { return $this->opsi_jawaban['a'] ?? null; }
+    public function getPilihanBAttribute() { return $this->opsi_jawaban['b'] ?? null; }
+    public function getPilihanCAttribute() { return $this->opsi_jawaban['c'] ?? null; }
+    public function getPilihanDAttribute() { return $this->opsi_jawaban['d'] ?? null; }
+    public function getPilihanEAttribute() { return $this->opsi_jawaban['e'] ?? null; }
+
+    // Mapping balik: jawaban_benar -> kunci_jawaban
+    public function getKunciJawabanAttribute()
+    {
+        return $this->attributes['jawaban_benar'] ?? null;
+    }
+
+    // Mapping balik: bobot_nilai -> bobot
+    public function getBobotAttribute()
+    {
+        return $this->attributes['bobot_nilai'] ?? null;
+    }
+
+    /* |==========================================================================
+    |  RELASI & HELPER
+    |========================================================================== */
+
     public function jawaban(): HasMany
     {
         return $this->hasMany(Jawaban::class);
     }
 
-    /**
-     * Scope: Filter berdasarkan tipe soal
-     */
+    public function ujianSection(): BelongsTo
+    {
+        // Pastikan nama kolom foreign key bener: ujian_section_id
+        return $this->belongsTo(UjianSection::class, 'ujian_section_id');
+    }
+
     public function scopeByTipe($query, TipeSoal $tipe)
     {
         return $query->where('tipe_soal', $tipe->value);
     }
 
-    /**
-     * Scope: Urutkan berdasarkan nomor urut
-     */
     public function scopeOrdered($query)
     {
         return $query->orderBy('nomor_urut');
     }
 
-    /**
-     * : Cek apakah soal adalah pilihan ganda
-     */
     public function isPilihanGanda(): bool
     {
-        return in_array($this->tipe_soal, ['listening', 'reading'], true);
+        return in_array($this->tipe_soal, ['listening', 'reading', 'structure', 'pilihan_ganda'], true);
     }
 
-
-    /**
-     * : Cek apakah soal adalah essay/writing
-     */
     public function isEssay(): bool
     {
         return $this->tipe_soal === 'writing';
     }
 
-
-    /**
-     * : Cek apakah soal punya audio
-     */
     public function hasAudio(): bool
     {
         return !empty($this->audio_path);
     }
 
-    /**
-     * : Ambil URL audio lengkap
-     */
     public function getAudioUrlAttribute(): ?string
     {
-        if (!$this->audio_path) {
-            return null;
-        }
-
+        if (!$this->audio_path) return null;
         return asset('storage/' . $this->audio_path);
     }
 
-    /**
-     * : Format durasi audio ke menit:detik
-     */
     public function getAudioDurationFormattedAttribute(): ?string
     {
-        if (!$this->audio_duration) {
-            return null;
-        }
-
+        if (!$this->audio_duration) return null;
         $minutes = floor($this->audio_duration / 60);
         $seconds = $this->audio_duration % 60;
-
         return sprintf('%02d:%02d', $minutes, $seconds);
     }
 
-    /**
-     * : Hitung tingkat kesulitan soal (berdasarkan jawaban benar siswa)
-     */
     public function getTingkatKesulitanAttribute(): string
     {
         $totalJawaban = $this->jawaban()->count();
-        
-        if ($totalJawaban === 0) {
-            return 'Belum Ada Data';
-        }
+        if ($totalJawaban === 0) return 'Belum Ada Data';
 
         $jawabanBenar = $this->jawaban()->where('is_benar', true)->count();
         $persentase = ($jawabanBenar / $totalJawaban) * 100;
@@ -144,13 +162,4 @@ class Soal extends Model
             default => 'Sulit',
         };
     }
-
-    /**
- * Relasi ke ujian section (many:1)
- */
-public function ujianSection(): BelongsTo
-{
-    return $this->belongsTo(UjianSection::class);
-}
-
 }

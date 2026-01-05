@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Siswa</title>
+    <title>Dashboard Siswa - CBT TOEFL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,55 +12,86 @@
         body { font-family: 'Poppins', sans-serif; }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        nav::-webkit-scrollbar { display: none; }
     </style>
 </head>
 
 <body class="bg-gray-100 font-sans flex text-slate-800">
 
-    {{-- SIDEBAR --}}
-    <div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50 transition-all duration-300 shadow-xl">
-        <div class="text-white mb-4 cursor-pointer hover:scale-110 transition duration-300">
-            <i data-lucide="menu" size="28"></i>
+    {{-- SIDEBAR SISWA (UPDATED: GAYA EXPANDABLE ALA GURU) --}}
+    <aside class="w-20 hover:w-64 bg-[#004e92] text-white h-screen fixed left-0 top-0 transition-all duration-300 z-50 flex flex-col group shadow-2xl overflow-hidden font-poppins">
+        
+        {{-- 1. Logo Area --}}
+        <div class="h-20 flex items-center justify-center border-b border-white/10 relative shrink-0">
+            {{-- Ikon Logo --}}
+            <div class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center absolute left-5 transition-all duration-300">
+                <i data-lucide="graduation-cap" class="text-white w-6 h-6"></i>
+            </div>
+            
+            {{-- Teks Logo (Muncul pas di-hover) --}}
+            <span class="opacity-0 group-hover:opacity-100 transition-all duration-500 absolute left-20 font-bold text-xl tracking-wide whitespace-nowrap">
+                CBT AL-MA'SOEM
+            </span>
         </div>
 
-        <a href="?page=home" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $page == 'home' ? 'bg-white/20 shadow-lg ring-1 ring-white/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}"
-           title="Dashboard">
-            <i data-lucide="home" size="28" class="text-white"></i>
-        </a>
+        {{-- 2. Menu Navigasi --}}
+        <nav class="flex-1 py-6 flex flex-col gap-2 px-3 overflow-y-auto">
 
-        <a href="?page=test" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $page == 'test' ? 'bg-white/20 shadow-lg ring-1 ring-white/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}"
-           title="Ujian">
-            <i data-lucide="edit-3" size="28" class="text-white"></i>
-        </a>
+            {{-- Menu: Beranda --}}
+            <a href="?page=home" 
+               class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
+               {{ $page == 'home' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                <i data-lucide="home" class="w-6 h-6 shrink-0"></i>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Beranda</span>
+                @if($page == 'home') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
+            </a>
 
-        <a href="?page=analysis" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $page == 'analysis' ? 'bg-white/20 shadow-lg ring-1 ring-white/30' : 'text-white/70 hover:text-white hover:bg-white/10' }}"
-           title="Analisis">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
+            {{-- Menu: Ujian Saya --}}
+            <a href="?page=test" 
+               class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
+               {{ $page == 'test' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                <i data-lucide="pen-tool" class="w-6 h-6 shrink-0"></i>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Ujian Saya</span>
+                @if($page == 'test') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
+            </a>
 
-        <div class="mt-auto flex flex-col gap-6 mb-4">
-            <div class="relative group">
-                <div class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer border-2 border-transparent group-hover:border-white transition shadow-md">
-                    <span class="text-purple-700 font-bold uppercase">
-                        {{ substr(Auth::user()->username, 0, 1) }}
-                    </span>
+            {{-- Menu: Analisis --}}
+            <a href="?page=analysis" 
+               class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
+               {{ $page == 'analysis' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                <i data-lucide="bar-chart-2" class="w-6 h-6 shrink-0"></i>
+                <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Analisis Nilai</span>
+                @if($page == 'analysis') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
+            </a>
+
+        </nav>
+
+        {{-- 3. User & Logout Area --}}
+        <div class="p-4 border-t border-white/10 bg-[#00427a]">
+            <div class="flex items-center gap-3 overflow-hidden">
+                {{-- Avatar --}}
+                <div class="w-10 h-10 rounded-full bg-purple-200 flex items-center justify-center text-purple-700 font-bold shrink-0">
+                    {{ substr(Auth::user()->username ?? Auth::user()->name, 0, 1) }}
                 </div>
-
-                {{-- Logout Tooltip --}}
-                <div class="hidden group-hover:block absolute left-11 bottom-0 bg-white shadow-xl rounded-xl p-2 border border-gray-200 w-32 z-50 animate-fade-in">
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="w-full text-left text-sm font-large text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition flex items-center gap-2">
-                            <i data-lucide="log-out" size="14"></i> Logout
-                        </button>
-                    </form>
+                
+                {{-- Info User (Muncul pas di-hover) --}}
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex-1 min-w-0">
+                    <p class="text-sm font-bold truncate">{{ Auth::user()->username ?? Auth::user()->name }}</p>
+                    <p class="text-xs text-white/60 truncate uppercase">Siswa</p>
                 </div>
             </div>
+
+            {{-- Tombol Logout --}}
+            <form action="{{ route('logout') }}" method="POST" class="mt-4">
+                @csrf
+                <button type="submit" class="w-full flex items-center gap-4 px-3 py-2 rounded-lg text-red-200 hover:bg-red-500/20 hover:text-white transition-all duration-200 group/button whitespace-nowrap">
+                    <i data-lucide="log-out" class="w-6 h-6 shrink-0"></i>
+                    <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">Keluar Aplikasi</span>
+                </button>
+            </form>
         </div>
-    </div>
+
+    </aside>
 
     {{-- MAIN CONTENT --}}
     <main class="flex-1 ml-20 p-8 transition-all duration-300 min-h-screen">
@@ -133,74 +164,91 @@
                 @endforelse
             </section>
 
-        {{-- HALAMAN UJIAN (REVISI FINAL) --}}
+        {{-- HALAMAN UJIAN --}}
         @elseif($page == 'test')
             <div class="animate-fade-in">
                 
                 {{-- SATU KOTAK BESAR UNTUK SEMUA --}}
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-[500px]">
                     
-                    @if($ujianAktif->count() > 0)
+                    @if(isset($ujianAktif) && $ujianAktif->count() > 0)
                         {{-- KONDISI 1: ADA UJIAN --}}
                         <div class="mb-6 border-b border-gray-100 pb-4">
                             <h2 class="text-xl font-bold text-gray-800">Ujian Anda</h2>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            @foreach($ujianAktif as $ujian)
-                                @php
-                                    // Cek Status Waktu
-                                    $isStarted = now() >= $ujian->waktu_mulai;
-                                @endphp
+            @foreach($ujianAktif as $ujian)
+                @php
+                    $sesiSiswa = \App\Models\SesiUjian::where('ujian_id', $ujian->id)
+                        ->where('siswa_id', $user->siswa->id ?? null)
+                        ->first();
 
-                                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 hover:shadow-md transition group h-full flex flex-col hover:-translate-y-1 duration-300">
-                                    <div class="flex justify-between items-start mb-4">
-                                        <div class="p-3 {{ $isStarted ? 'bg-blue-100 text-[#004e92]' : 'bg-gray-200 text-gray-500' }} rounded-xl transition duration-300">
-                                            <i data-lucide="book-open" size="24"></i>
-                                        </div>
-                                        
-                                        @if($isStarted)
-                                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full animate-pulse">
-                                                AKTIF
-                                            </span>
-                                        @else
-                                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
-                                                AKAN DATANG
-                                            </span>
-                                        @endif
-                                    </div>
+                    $isStarted = now() >= $ujian->waktu_mulai;
+                    // Status Selesai: Bisa ngecek string atau value Enum
+                    $isFinished = $sesiSiswa && ($sesiSiswa->status === \App\Enums\StatusUjian::SELESAI || $sesiSiswa->status == 'selesai');
+                @endphp
 
-                                    <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 leading-snug" title="{{ $ujian->judul }}">
-                                        {{ $ujian->judul }}
-                                    </h3>
-                                    
-                                    <div class="space-y-3 text-sm text-gray-500 mb-6 flex-1">
-                                        <div class="flex items-center gap-2">
-                                            <i data-lucide="clock" size="16" class="text-gray-400"></i>
-                                            <span>Durasi: <span class="font-medium text-gray-700">{{ $ujian->durasi_menit }} Menit</span></span>
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <i data-lucide="calendar" size="16" class="text-gray-400"></i>
-                                            @if(!$isStarted)
-                                                <span class="text-yellow-600 font-medium">Mulai: {{ $ujian->waktu_mulai->format('d M H:i') }}</span>
-                                            @else
-                                                <span>Selesai: {{ $ujian->waktu_selesai->format('d M H:i') }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200 hover:shadow-md transition group h-full flex flex-col hover:-translate-y-1 duration-300">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-3 {{ $isStarted ? 'bg-blue-100 text-[#004e92]' : 'bg-gray-200 text-gray-500' }} rounded-xl transition duration-300">
+                            <i data-lucide="book-open" size="24"></i>
+                        </div>
+                        
+                        @if($isFinished)
+                            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">
+                                SUDAH DIKERJAKAN
+                            </span>
+                        @elseif($isStarted)
+                            <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full animate-pulse">
+                                AKTIF
+                            </span>
+                        @else
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded-full">
+                                AKAN DATANG
+                            </span>
+                        @endif
+                    </div>
 
-                                    @if($isStarted)
-                                        <a href="{{ route('siswa.ujian.detail', $ujian->id) }}" 
-                                           class="block w-full text-center py-3 bg-[#004e92] hover:bg-[#003d73] text-white font-semibold rounded-xl transition shadow-sm hover:shadow active:scale-95 duration-200">
-                                            Kerjakan Sekarang
-                                        </a>
-                                    @else
-                                        <button disabled class="block w-full text-center py-3 bg-gray-200 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
-                                            Belum Dimulai
-                                        </button>
-                                    @endif
-                                </div>
-                            @endforeach
+                    <h3 class="text-lg font-bold text-gray-800 mb-2 line-clamp-2 leading-snug" title="{{ $ujian->judul }}">
+                        {{ $ujian->judul }}
+                    </h3>
+                    
+                    <div class="space-y-3 text-sm text-gray-500 mb-6 flex-1">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="clock" size="16" class="text-gray-400"></i>
+                            <span>Durasi: <span class="font-medium text-gray-700">{{ $ujian->durasi_menit }} Menit</span></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="calendar" size="16" class="text-gray-400"></i>
+                            @if($isFinished)
+                                <span class="text-blue-600 font-medium italic">Ujian selesai pada {{ $sesiSiswa->updated_at->format('d M H:i') }}</span>
+                            @elseif(!$isStarted)
+                                <span class="text-yellow-600 font-medium">Mulai: {{ $ujian->waktu_mulai->format('d M H:i') }}</span>
+                            @else
+                                <span>Selesai: {{ $ujian->waktu_selesai->format('d M H:i') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if($isFinished)
+                        {{-- Tombol Lihat Hasil kalau sudah beres --}}
+                        <a href="{{ route('siswa.ujian.hasil', $sesiSiswa->id) }}" 
+                        class="block w-full text-center py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition shadow-sm hover:shadow active:scale-95 duration-200">
+                            Lihat Hasil
+                        </a>
+                    @elseif($isStarted)
+                        <a href="{{ route('siswa.ujian.detail', $ujian->id) }}" 
+                        class="block w-full text-center py-3 bg-[#004e92] hover:bg-[#003d73] text-white font-semibold rounded-xl transition shadow-sm hover:shadow active:scale-95 duration-200">
+                            Kerjakan Sekarang
+                        </a>
+                    @else
+                        <button disabled class="block w-full text-center py-3 bg-gray-200 text-gray-500 font-semibold rounded-xl cursor-not-allowed">
+                            Belum Dimulai
+                        </button>
+                    @endif
+                </div>
+            @endforeach
                         </div>
 
                     @else
@@ -216,7 +264,7 @@
                                 Saat ini belum ada jadwal ujian aktif yang tersedia untuk Anda kerjakan. Silakan cek arsip ujian lengkap jika perlu.
                             </p>
 
-                            <a href="{{ route('siswa.ujian.index') }}" 
+                            <a href="?page=test" 
                                class="inline-flex items-center gap-2 px-6 py-3 bg-[#004e92] hover:bg-[#003d73] text-white font-medium rounded-xl transition shadow-md hover:shadow-lg active:scale-95 duration-200">
                                 <i data-lucide="list" size="20"></i>
                                 Lihat Semua Daftar Ujian
@@ -228,15 +276,111 @@
             </div>
 
         {{-- HALAMAN ANALISIS --}}
-        @elseif($page == 'analysis')
-            <div class="bg-white p-10 rounded-2xl shadow-sm border border-gray-100 text-center animate-fade-in">
-                <div class="inline-block p-4 bg-purple-50 rounded-full mb-4">
-                    <i data-lucide="bar-chart-2" size="40" class="text-purple-600"></i>
+            @elseif($page == 'analysis')
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 animate-fade-in">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <i data-lucide="line-chart" class="text-purple-600 w-6 h-6"></i>
+                        </div>
+                        Statistik Performa TOEFL
+                    </h2>
+                    <p class="text-gray-500 text-sm mt-1">Grafik progres skor total Anda (Standard TOEFL ITP 310-677).</p>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Analisis Lengkap</h2>
-                <p class="text-gray-500">Grafik perkembangan nilai detail akan muncul di sini.</p>
             </div>
-        @endif
+            
+            <div class="h-[450px] w-full bg-slate-50/50 p-6 rounded-2xl border border-dashed border-gray-200 relative">
+                {{-- Cek dulu datanya ada gak, kalo gak ada tampilin pesan kosong --}}
+                @if(count($chartData['scores']) > 0)
+                    <canvas id="scoreChart"></canvas>
+                @else
+                    <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                        <i data-lucide="bar-chart" size="48" class="mb-4 opacity-20"></i>
+                        <p class="italic">Belum ada data nilai untuk dianalisis.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Script Chart.js (Pake CDN yang pasti-pasti aja) --}}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        
+        <script>
+            // Pake window.onload biar pasti semua library (Chart.js & Lucide) beres di-load
+            window.onload = function() {
+                const canvas = document.getElementById('scoreChart');
+                if (!canvas) return;
+
+                const ctx = canvas.getContext('2d');
+                
+                // Siapin Data dari Laravel
+                const labels = {!! json_encode($chartData['labels'] ?? []) !!};
+                const scores = {!! json_encode($chartData['scores'] ?? []) !!};
+
+                // Gradient Fill
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(0, 78, 146, 0.3)');
+                gradient.addColorStop(1, 'rgba(0, 78, 146, 0)');
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Skor Total',
+                            data: scores,
+                            borderColor: '#004e92',
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#004e92',
+                            pointBorderWidth: 2,
+                            pointHoverRadius: 9
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: '#1e293b',
+                                titleFont: { size: 14 },
+                                bodyFont: { size: 13 },
+                                padding: 12,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' Skor: ' + context.parsed.y;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 300,
+                                max: 680,
+                                ticks: { stepSize: 50 },
+                                grid: { borderDash: [5, 5], color: '#e2e8f0' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+                
+                // Re-init icons kalo ada yang belum ke-render
+                if(typeof lucide !== 'undefined') lucide.createIcons();
+            };
+        </script>
+    @endif
 
         {{-- FOOTER --}}
         <footer class="text-center mt-12 pb-6 text-gray-400 text-xs border-t border-gray-200 pt-6">
@@ -245,7 +389,7 @@
         </footer>
         
         {{-- HASIL TERAKHIR NOTIFICATION --}}
-        @if ($sesiTerakhir && $sesiTerakhir->status === 'selesai')
+        @if (isset($sesiTerakhir) && $sesiTerakhir && $sesiTerakhir->status === 'selesai')
             <div class="mt-8 bg-green-50 border border-green-200 p-4 rounded-xl flex justify-between items-center shadow-sm animate-fade-in" style="animation-delay: 0.5s;">
                 <div class="flex items-center gap-3">
                     <div class="bg-green-100 p-2 rounded-lg text-green-700">
@@ -266,12 +410,6 @@
 
     <script>
         lucide.createIcons();
-
-        // Prevent Back Button Logic
-        history.pushState(null, null, location.href);
-        window.onpopstate = function () {
-            history.go(1);
-        };
     </script>
     
 </body>

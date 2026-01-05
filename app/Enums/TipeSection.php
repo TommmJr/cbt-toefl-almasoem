@@ -7,6 +7,7 @@ enum TipeSection: string
     case LISTENING = 'listening';
     case STRUCTURE = 'structure';
     case READING   = 'reading';
+    case WRITING   = 'writing';
 
     public static function values(): array
     {

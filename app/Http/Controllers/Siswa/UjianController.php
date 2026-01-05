@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Ujian;
 use App\Models\SesiUjian;
 use App\Models\Jawaban;
+use App\Models\Soal; 
 use App\Services\TokenUjianService;
 use App\Actions\Ujian\AutoSubmitSectionAction;
 use App\Enums\StatusUjian;
@@ -39,12 +40,12 @@ class UjianController extends Controller
     }
 
     /**
-     * PROSES TOKEN → BUAT / RESUME SESI
+     * PROSES TOKEN - BUAT / RESUME SESI
      */
     public function aksesUjian(Request $request, TokenUjianService $tokenService)
     {
         $request->validate([
-            'kode_token' => 'required|string|size:6',
+            'kode_token' => 'required|string',
         ]);
 
         $siswa = auth()->user()->siswa;
@@ -117,7 +118,7 @@ class UjianController extends Controller
         $sesi = SesiUjian::findOrFail($request->sesi_id);
         $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
 
-        // ⬇️ INI KUNCI UTAMA
+        // Submit section saat ini
         app(AutoSubmitSectionAction::class)->submit($sesi);
 
         if ($sesi->fresh()->status === StatusUjian::SELESAI) {
@@ -131,62 +132,78 @@ class UjianController extends Controller
         ]);
     }
 
-
     /**
-     * AUTOSAVE JAWABAN REALTIME
+     * AUTOSAVE JAWABAN REALTIME DAN SIMPAN
+     * (INI YANG KITA PERBAIKI)
      */
     public function simpanJawaban(
         Request $request,
         AutoSubmitSectionAction $autoSubmit
     ) {
+        // Validasi
         $request->validate([
             'sesi_id' => 'required|exists:sesi_ujians,id',
             'soal_id' => 'required|exists:soal,id',
-            'jawaban' => 'nullable|string',
         ]);
 
-        $sesi = SesiUjian::with('ujian.sections.soal')
-            ->findOrFail($request->sesi_id);
+        $sesi = SesiUjian::findOrFail($request->sesi_id);
+        $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
 
-        $sesi->pastikanBisaDiaksesOleh(auth()->user()->siswa->id);
-
-        // AUTO SUBMIT kalau waktu habis
-        $autoSubmit->handle($sesi);
-
+        // Cek apakah waktu habis
         if ($sesi->isSectionExpired()) {
-            return response()->json(['locked' => true], 403);
+            return response()->json(['locked' => true, 'message' => 'Waktu habis'], 403);
         }
 
-        $section = $sesi->sectionAktif();
-        $soal = $section?->soal()->where('id', $request->soal_id)->first();
+        // Ambil data soal
+        $soal = Soal::findOrFail($request->soal_id);
 
-        if (! $soal) {
-            abort(403);
-        }
-
-        $data = [
+        // Siapkan data update dasar
+        $dataUpdate = [
             'sesi_ujian_id' => $sesi->id,
             'soal_id' => $soal->id,
             'waktu_jawab' => now(),
         ];
 
-        if ($soal->isPilihanGanda()) {
-            $data['jawaban_pilihan'] = $request->jawaban;
+        // LOGIC PENYIMPANAN BERDASARKAN TIPE SOAL
+        if ($soal->tipe_soal === 'writing') {
+            // --- LOGIC ESSAY ---
+            $request->validate([
+                'jawaban_essay' => 'required|string',
+            ]);
+            
+            $dataUpdate['jawaban_essay'] = $request->jawaban_essay;
+            $dataUpdate['jumlah_kata'] = str_word_count(strip_tags($request->jawaban_essay));
+
         } else {
-            $data['jawaban_essay'] = $request->jawaban;
+            // --- LOGIC PILIHAN GANDA ---
+            $request->validate([
+                'jawaban_pilihan' => 'required|string',
+            ]);
+
+            $dataUpdate['jawaban_pilihan'] = $request->jawaban_pilihan;
+            
+            // Cek Jawaban Benar (Case Insensitive biar aman)
+            $isBenar = strtoupper((string)$request->jawaban_pilihan) === strtoupper((string)$soal->jawaban_benar);
+            
+            $dataUpdate['is_benar'] = $isBenar;
+            
+            // FIX PENTING: Pake 'bobot_nilai' sesuai database lu
+            $dataUpdate['skor'] = $isBenar ? $soal->bobot_nilai : 0;
         }
 
+        // Simpan ke Database
         $jawaban = Jawaban::updateOrCreate(
             [
                 'sesi_ujian_id' => $sesi->id,
                 'soal_id' => $soal->id,
             ],
-            $data
+            $dataUpdate
         );
 
         return response()->json([
             'status' => 'saved',
             'jawaban_id' => $jawaban->id,
+            'tipe' => $soal->tipe_soal
         ]);
     }
 

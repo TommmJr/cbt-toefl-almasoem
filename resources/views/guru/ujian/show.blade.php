@@ -32,14 +32,25 @@
                         </div>
                     </div>
                     
-                    {{-- Tombol Header --}}
-                    <div class="flex gap-2">
-                        @if(!$ujian->is_published)
-                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
-                                <i data-lucide="upload-cloud" size="18"></i> Publish
-                            </button>
-                        @else
-                            <span class="px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center gap-2 border border-green-200">
+                    {{-- Tombol Header (UPDATE: Form Publish) --}}
+                    <div class="flex gap-2 items-center">
+                        <form action="{{ route('guru.ujian.publish', $ujian->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            
+                            @if(!$ujian->is_published)
+                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+                                    <i data-lucide="upload-cloud" size="18"></i> Publish Ujian
+                                </button>
+                            @else
+                                <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+                                    <i data-lucide="eye-off" size="18"></i> Jadikan Draft
+                                </button>
+                            @endif
+                        </form>
+
+                        @if($ujian->is_published)
+                            <span class="px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center gap-2 border border-green-200 cursor-default font-bold">
                                 <i data-lucide="check-circle" size="18"></i> Published
                             </span>
                         @endif
@@ -51,6 +62,12 @@
             @if(session('success'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
                     {{ session('success') }}
+                </div>
+            @endif
+            
+            @if(session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+                    {{ session('error') }}
                 </div>
             @endif
 
@@ -72,8 +89,15 @@
                         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                                 <div>
-                                    <h3 class="font-bold text-gray-800 text-lg">{{ $section->judul }}</h3>
-                                    <p class="text-xs text-gray-500">Durasi: {{ $section->durasi_menit }} Menit • {{ $section->soal->count() }} Soal</p>
+                                    <h3 class="font-bold text-gray-800 text-lg">{{ $section->judul_section ?? $section->judul }}</h3> 
+                                    <div class="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                        <span class="bg-gray-100 border border-gray-300 px-1.5 py-0.5 rounded uppercase font-bold text-[10px]">
+                                            {{ $section->tipe_section }}
+                                        </span>
+                                        <span>Durasi: {{ $section->durasi_menit }} Menit</span>
+                                        <span>•</span>
+                                        <span>{{ $section->soal->count() }} Soal</span>
+                                    </div>
                                 </div>
                                 <div class="flex gap-2">
                                    <a href="{{ route('guru.ujian.soal.create', $section->id) }}" 
@@ -86,10 +110,48 @@
                                 </div>
                             </div>
                             
-                            {{-- Preview Soal (Kosong dulu) --}}
-                            <div class="p-6 text-center text-gray-400 text-sm italic">
-                                Belum ada soal di section ini.
-                            </div>
+                            {{-- LIST SOAL (UPDATE: Biar soalnya nongol) --}}
+                            @if($section->soal->count() > 0)
+                                <div class="divide-y divide-gray-100">
+                                    @foreach($section->soal as $index => $soal)
+                                        <div class="p-4 hover:bg-blue-50 transition group">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-xs">No. {{ $soal->nomor_urut ?? ($index + 1) }}</span>
+                                                    <span class="bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded text-xs border border-gray-300">
+                                                        Kunci: {{ strtoupper($soal->kunci_jawaban) }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-400">Bobot: {{ $soal->bobot }}</span>
+                                                </div>
+                                                
+                                                {{-- Tombol Hapus yang BERFUNGSI --}}
+                                            <form action="{{ route('guru.ujian.soal.destroy', $soal->id) }}" method="POST" onsubmit="return confirm('Yakin mau hapus soal?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-500 hover:text-red-700 transition" title="Hapus Soal">
+                                                    <i data-lucide="trash" size="14"></i>
+                                                </button>
+                                            </form>
+                                            </div>
+                                            
+                                            <div class="text-gray-700 text-sm pl-1 prose prose-sm max-w-none">
+                                                {!! $soal->pertanyaan !!}
+                                            </div>
+                                            
+                                            <div class="grid grid-cols-2 gap-2 mt-3 pl-1 text-xs text-gray-500">
+                                                <div class="{{ $soal->kunci_jawaban == 'a' ? 'text-green-600 font-bold' : '' }}">A. {{ $soal->pilihan_a }}</div>
+                                                <div class="{{ $soal->kunci_jawaban == 'b' ? 'text-green-600 font-bold' : '' }}">B. {{ $soal->pilihan_b }}</div>
+                                                <div class="{{ $soal->kunci_jawaban == 'c' ? 'text-green-600 font-bold' : '' }}">C. {{ $soal->pilihan_c }}</div>
+                                                <div class="{{ $soal->kunci_jawaban == 'd' ? 'text-green-600 font-bold' : '' }}">D. {{ $soal->pilihan_d }}</div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="p-6 text-center text-gray-400 text-sm italic">
+                                    Belum ada soal di section ini.
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>
@@ -128,12 +190,28 @@
             
             <form action="{{ route('guru.ujian.section.store', $ujian->id) }}" method="POST" class="p-6">
                 @csrf
+                
+                {{-- Input Judul --}}
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Judul Section</label>
                     <input type="text" name="judul" placeholder="Contoh: Section 1 - Listening Comprehension" 
                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
                 </div>
+
+                {{-- Input Tipe Section --}}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipe Section</label>
+                    <select name="tipe_section" class="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" required>
+                        <option value="" disabled selected>-- Pilih Tipe --</option>
+                        <option value="listening">Listening</option>
+                        <option value="structure">Structure</option>
+                        <option value="reading">Reading</option>
+                        <option value="writing">Writing</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Pilih jenis soal sesuai format ujian.</p>
+                </div>
                 
+                {{-- Input Durasi --}}
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (Menit)</label>
                     <input type="number" name="durasi_menit" value="20" min="1"

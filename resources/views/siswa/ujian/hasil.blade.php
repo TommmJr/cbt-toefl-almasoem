@@ -222,11 +222,14 @@
                                             <td class="px-6 py-4 font-medium text-gray-900 text-center">
                                                 {{ $soal->nomor_urut }}
                                             </td>
-                                            <td class="px-6 py-4 text-gray-600 truncate max-w-xs" title="{{ $soal->pertanyaan }}">
-                                                {{ Str::limit($soal->pertanyaan, 60) }}
+                                            
+                                            {{-- [FIXED] Pake strip_tags biar tag HTML <p> ilang --}}
+                                            <td class="px-6 py-4 text-gray-600 truncate max-w-xs" title="{{ strip_tags($soal->pertanyaan) }}">
+                                                {{ Str::limit(strip_tags($soal->pertanyaan), 60) }}
                                             </td>
+
                                             <td class="px-6 py-4 text-center font-bold {{ $isCorrect ? 'text-green-600' : 'text-red-500' }}">
-                                                {{ $userAns }}
+                                                {{ Str::limit(strip_tags($userAns), 20) }}
                                             </td>
                                             <td class="px-6 py-4 text-center text-gray-500">
                                                 {{ $soal->jawaban_benar ?? 'Essay' }}

@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('soal', function (Blueprint $table) {
             $table->id();
             $table->foreignId('ujian_section_id')->constrained('ujian_sections')->cascadeOnDelete()->comment('FK ke tabel ujian_section');
-            $table->enum('tipe_soal', ['listening', 'reading', 'writing'])->comment('Tipe soal TOEFL');
+            $table->string('tipe_soal');
             $table->integer('nomor_urut')->unsigned()->comment('Nomor urut soal dalam ujian');
             $table->text('pertanyaan')->comment('Isi pertanyaan/soal');
             

@@ -5,68 +5,150 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Ujian;
 use App\Models\UjianSection;
-use App\Enums\TipeUjian;
+use App\Models\Soal;
+use App\Enums\TipeUjian; // Pastikan Enum ini ada, atau ganti string biasa
 use Illuminate\Support\Facades\DB;
 
 class DummyUjianSeeder extends Seeder
 {
     public function run(): void
     {
-        $guruId = DB::table('guru')
-            ->whereNull('deleted_at')
-            ->value('id');
+        // 1. Ambil ID Guru (Siapa aja yg ada)
+        $guruId = DB::table('guru')->whereNull('deleted_at')->value('id');
 
-        if (! $guruId) {
-            throw new \Exception('Seeder error: Data guru tidak ditemukan di tabel guru.');
+        if (!$guruId) {
+            // Fallback kalau tabel guru kosong, ambil user pertama
+            $guruId = DB::table('users')->value('id');
         }
 
-        $ujian = Ujian::firstOrCreate(
-            ['kode_ujian' => 'DUMMY-TOEFL'],
+        // 2. Buat Ujian Induk
+        // Pake updateOrCreate biar gak duplikat kalau di-seed ulang
+        $ujian = Ujian::updateOrCreate(
+            ['judul' => 'TOEFL Prediction - Full Simulation'], // Kunci pencarian
             [
                 'guru_id' => $guruId,
-                'judul' => 'Simulasi TOEFL ITP',
-                'deskripsi' => 'Ujian dummy untuk testing alur siswa',
-                'tipe_ujian' => TipeUjian::PRACTICE,
-                'durasi_menit' => 115,
-                'waktu_mulai' => now()->subDay(),
-                'waktu_selesai' => now()->addDay(),
+                'kode_ujian' => 'TOEFL-001',
+                'deskripsi' => 'Simulasi lengkap: Listening, Structure, Reading, Writing.',
+                'durasi_menit' => 140,
+                'waktu_mulai' => now()->subDays(1),
+                'waktu_selesai' => now()->addYears(1),
                 'is_published' => true,
+                // 'tipe_ujian' => 'practice' // Sesuaikan kalau pake Enum/String
             ]
         );
 
-        // UPDATE URUTAN DI SINI:
-        // 1. Reading
-        // 2. Writing (Structure)
-        // 3. Listening
-        $sections = [
+        // ==========================================
+        // SECTION 1: LISTENING (Audio)
+        // ==========================================
+        $secListening = UjianSection::updateOrCreate(
+            ['ujian_id' => $ujian->id, 'tipe_section' => 'listening'],
             [
-                'judul_section' => 'Reading Comprehension', 
-                'tipe_section' => 'reading',    
-                'urutan' => 1, 
-                'durasi_menit' => 55
-            ],
-            [
-                'judul_section' => 'Structure & Written',   
-                'tipe_section' => 'writing',    
-                'urutan' => 2, 
-                'durasi_menit' => 25
-            ],
-            [
-                'judul_section' => 'Listening Comprehension', 
-                'tipe_section' => 'listening',  
-                'urutan' => 3, 
-                'durasi_menit' => 35
-            ],
-        ];
+                'judul_section' => 'Listening Comprehension',
+                'durasi_menit' => 40,
+                'urutan' => 1
+            ]
+        );
 
-        foreach ($sections as $s) {
-            UjianSection::updateOrCreate(
-                [
-                    'ujian_id' => $ujian->id, 
-                    'tipe_section' => $s['tipe_section'] // Kunci update biar gak duplikat
-                ],
-                array_merge($s, ['ujian_id' => $ujian->id])
-            );
-        }
+        // Soal Listening
+        Soal::firstOrCreate(
+            ['ujian_section_id' => $secListening->id, 'nomor_urut' => 1],
+            [
+                'tipe_soal' => 'listening',
+                'pertanyaan' => '<p>Listen to the conversation. What does the man imply?</p>',
+                'audio_path' => 'soal/audio.mp3', // Pastikan file ini ada di storage!
+                'opsi_jawaban' => json_encode([
+                    'A' => 'He will study tonight.',
+                    'B' => 'He is going to the cinema.',
+                    'C' => 'He wants to eat dinner.',
+                    'D' => 'He is sleeping early.'
+                ]),
+                'jawaban_benar' => 'A',
+                'bobot' => 10
+            ]
+        );
+
+        // ==========================================
+        // SECTION 2: STRUCTURE (Grammar - Pilihan Ganda)
+        // ==========================================
+        $secStructure = UjianSection::updateOrCreate(
+            ['ujian_id' => $ujian->id, 'tipe_section' => 'structure'],
+            [
+                'judul_section' => 'Structure & Written Expression',
+                'durasi_menit' => 25,
+                'urutan' => 2
+            ]
+        );
+
+        // Soal Structure
+        Soal::firstOrCreate(
+            ['ujian_section_id' => $secStructure->id, 'nomor_urut' => 1],
+            [
+                'tipe_soal' => 'pilihan_ganda', // Struktur itu PG, bukan Essay
+                'pertanyaan' => '<p>The sun ______ in the east and sets in the west.</p>',
+                'opsi_jawaban' => json_encode([
+                    'A' => 'rise',
+                    'B' => 'rises',
+                    'C' => 'rose',
+                    'D' => 'rising'
+                ]),
+                'jawaban_benar' => 'B',
+                'bobot' => 10
+            ]
+        );
+
+        // ==========================================
+        // SECTION 3: READING (Bacaan)
+        // ==========================================
+        $secReading = UjianSection::updateOrCreate(
+            ['ujian_id' => $ujian->id, 'tipe_section' => 'reading'],
+            [
+                'judul_section' => 'Reading Comprehension',
+                'durasi_menit' => 55,
+                'urutan' => 3
+            ]
+        );
+
+        // Soal Reading
+        Soal::firstOrCreate(
+            ['ujian_section_id' => $secReading->id, 'nomor_urut' => 1],
+            [
+                'tipe_soal' => 'pilihan_ganda',
+                'passage' => '<div class="trix-content"><h3>The History of Internet</h3><p>The history of the Internet has its origin in...</p></div>',
+                'pertanyaan' => '<p>What is the main topic of the passage?</p>',
+                'opsi_jawaban' => json_encode([
+                    'A' => 'Computer Science',
+                    'B' => 'The History of Internet',
+                    'C' => 'Modern Technology',
+                    'D' => 'Future AI'
+                ]),
+                'jawaban_benar' => 'B',
+                'bobot' => 10
+            ]
+        );
+
+        // ==========================================
+        // SECTION 4: WRITING (Essay)
+        // ==========================================
+        $secWriting = UjianSection::updateOrCreate(
+            ['ujian_id' => $ujian->id, 'tipe_section' => 'writing'],
+            [
+                'judul_section' => 'Essay Writing',
+                'durasi_menit' => 30,
+                'urutan' => 4
+            ]
+        );
+
+        // Soal Essay
+        Soal::firstOrCreate(
+            ['ujian_section_id' => $secWriting->id, 'nomor_urut' => 1],
+            [
+                'tipe_soal' => 'writing', // Ini baru trigger Textarea
+                'pertanyaan' => '<p>Do you agree or disagree with the following statement? Technology has made children less creative. Use specific reasons and examples to support your opinion.</p>',
+                'opsi_jawaban' => null,
+                'jawaban_benar' => null,
+                'bobot' => 30,
+                'min_kata' => 250
+            ]
+        );
     }
 }
