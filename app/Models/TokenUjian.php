@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str; 
 
 class TokenUjian extends Model
 {
@@ -72,6 +73,23 @@ class TokenUjian extends Model
             ->where('berlaku_dari', '<=', now())
             ->where('berlaku_sampai', '>=', now())
             ->whereRaw('COALESCE(jumlah_terpakai, 0) < kuota_pemakaian');
+    }
+
+    /* ================= HELPER (TAMBAHAN BARU) ================= */
+
+    /**
+     * Helper: Generate token unik 6 digit
+     */
+    public static function generateKodeToken(): string
+    {
+        do {
+            // Bikin 6 karakter random uppercase
+            $token = strtoupper(Str::random(6));
+            
+            // Cek di DB biar gak duplikat
+        } while (self::where('kode_token', $token)->exists());
+
+        return $token;
     }
 
     /* ================= VALIDASI TOKEN (HANYA UNTUK SESI BARU) ================= */

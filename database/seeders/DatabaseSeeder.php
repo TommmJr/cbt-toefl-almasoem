@@ -2,22 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-public function run(): void
-{
-    // USERS dulu
-    $this->call(UserSeeder::class); // atau seeder user lu
-
-    // GURU HARUS SEBELUM UJIAN
-    $this->call(GuruSeeder::class);
-
-    // BARU ujian + section
-    $this->call(DummyUjianSeeder::class);
-}
-
+    public function run(): void
+    {
+        $this->call([
+            UserSeeder::class,       // Bikin Admin & User dasar
+            GuruSeeder::class,       // Bikin Data Guru (Wajib sebelum Ujian)
+            DummyUjianSeeder::class, // Bikin Ujian & Soal Dummy
+            SiswaSeeder::class,      // Bikin Siswa Dummy (2025001)
+        ]);
+    }
 }
