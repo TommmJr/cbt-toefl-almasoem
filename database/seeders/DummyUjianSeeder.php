@@ -34,15 +34,37 @@ class DummyUjianSeeder extends Seeder
             ]
         );
 
+        // UPDATE URUTAN DI SINI:
+        // 1. Reading
+        // 2. Writing (Structure)
+        // 3. Listening
         $sections = [
-            ['judul_section' => 'Listening',  'tipe_section' => 'listening',  'urutan' => 1, 'durasi_menit' => 35],
-            ['judul_section' => 'Structure',  'tipe_section' => 'structure',  'urutan' => 2, 'durasi_menit' => 25],
-            ['judul_section' => 'Reading',    'tipe_section' => 'reading',    'urutan' => 3, 'durasi_menit' => 55],
+            [
+                'judul_section' => 'Reading Comprehension', 
+                'tipe_section' => 'reading',    
+                'urutan' => 1, 
+                'durasi_menit' => 55
+            ],
+            [
+                'judul_section' => 'Structure & Written',   
+                'tipe_section' => 'writing',    
+                'urutan' => 2, 
+                'durasi_menit' => 25
+            ],
+            [
+                'judul_section' => 'Listening Comprehension', 
+                'tipe_section' => 'listening',  
+                'urutan' => 3, 
+                'durasi_menit' => 35
+            ],
         ];
 
         foreach ($sections as $s) {
-            UjianSection::firstOrCreate(
-                ['ujian_id' => $ujian->id, 'urutan' => $s['urutan']],
+            UjianSection::updateOrCreate(
+                [
+                    'ujian_id' => $ujian->id, 
+                    'tipe_section' => $s['tipe_section'] // Kunci update biar gak duplikat
+                ],
                 array_merge($s, ['ujian_id' => $ujian->id])
             );
         }
