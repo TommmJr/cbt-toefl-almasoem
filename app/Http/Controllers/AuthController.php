@@ -20,63 +20,63 @@ class AuthController extends Controller
     }
 
     /**
-     * Proses login dengan validasi role
+     * Proses login TANPA validasi role manual (Otomatis deteksi)
      */
-public function login(Request $request): RedirectResponse
-{
-    $request->validate([
-        'username' => 'required|string',
-        'password' => 'required|string',
-        'role' => 'nullable|in:siswa,guru,admin',
-    ], [
-        'username.required' => 'Username/NIS wajib diisi',
-        'password.required' => 'Password wajib diisi',
-    ]);
-
-    $login = $request->username;
-
-    // 1. Cari user
-    $user = User::where('username', $login)
-        ->orWhere('email', $login)
-        ->first();
-
-    if (! $user) {
-        return back()->withErrors([
-            'username' => 'NIS / Username tidak ditemukan',
+    public function login(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+            // 'role' => 'nullable|in:siswa,guru,admin', // Gak perlu validasi role di request
+        ], [
+            'username.required' => 'Username/NIS wajib diisi',
+            'password.required' => 'Password wajib diisi',
         ]);
+
+        $login = $request->username;
+
+        // 1. Cari user
+        $user = User::where('username', $login)
+            ->orWhere('email', $login)
+            ->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'username' => 'NIS / Username tidak ditemukan',
+            ]);
+        }
+
+        // 2. Cek aktif SEBELUM dianggap login sah
+        if (! $user->is_active) {
+            return back()->withErrors([
+                'username' => 'Akun tidak aktif',
+            ]);
+        }
+
+        // 3. Auth (tanpa role)
+        if (! Auth::attempt([
+            'username' => $user->username,
+            'password' => $request->password,
+        ])) {
+            return back()->withErrors([
+                'password' => 'Password salah',
+            ]);
+        }
+
+        // 4. Session baru dianggap sah DI SINI
+        $request->session()->regenerate();
+
+        // 5. Validasi role DIBUANG SAJA biar gak error salah pilih
+        // if ($request->filled('role') && $user->role->value !== $request->role) {
+        //     Auth::logout();
+        //     return back()->withErrors([
+        //         'role' => 'Role tidak sesuai dengan akun',
+        //     ]);
+        // }
+
+        // 6. Redirect sesuai role (Sistem otomatis tau dia siapa dari database)
+        return $this->redirectToDashboard($user->role);
     }
-
-    // 2. Cek aktif SEBELUM dianggap login sah
-    if (! $user->is_active) {
-        return back()->withErrors([
-            'username' => 'Akun tidak aktif',
-        ]);
-    }
-
-    // 3. Auth (tanpa role)
-    if (! Auth::attempt([
-        'username' => $user->username,
-        'password' => $request->password,
-    ])) {
-        return back()->withErrors([
-            'password' => 'Password salah',
-        ]);
-    }
-
-    // 4. Session baru dianggap sah DI SINI
-    $request->session()->regenerate();
-
-    // 5. Validasi role opsional
-    if ($request->filled('role') && $user->role->value !== $request->role) {
-        Auth::logout();
-        return back()->withErrors([
-            'role' => 'Role tidak sesuai dengan akun',
-        ]);
-    }
-
-    // 6. Redirect sesuai role
-    return $this->redirectToDashboard($user->role);
-}
 
     /**
      * Logout user
@@ -93,7 +93,6 @@ public function login(Request $request): RedirectResponse
 
     /**
      * Redirect ke dashboard sesuai role
-     * FIX: Hapus type hint 
      */
     private function redirectToDashboard($role): RedirectResponse
     {
