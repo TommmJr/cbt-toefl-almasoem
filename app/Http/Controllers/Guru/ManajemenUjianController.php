@@ -92,8 +92,8 @@ class ManajemenUjianController extends Controller
         // Urutan otomatis
         $urutan = $ujian->sections()->count() + 1;
 
-        $ujian->sections()->create([
-            'judul' => $request->judul,
+            $ujian->sections()->create([
+            'judul_section' => $request->judul, 
             'durasi_menit' => $request->durasi_menit,
             'urutan' => $urutan,
             'tipe_section' => 'standard', 
