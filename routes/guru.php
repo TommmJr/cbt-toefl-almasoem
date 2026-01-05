@@ -7,29 +7,28 @@ use App\Http\Controllers\Guru\SoalController;
 
 Route::prefix('guru')
     ->middleware(['auth', 'role:guru'])
-    ->name('guru.')
+    ->name('guru.') 
     ->group(function () {
         
-        // Dashboard Utama
+        // 1. Dashboard Utama (Jadi: guru.dashboard)
         Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
 
-        // CRUD Ujian (INI YANG PENTING BANG, SUDAH DIAKTIFKAN)
+        // 2. CRUD Ujian (Jadi: guru.ujian.index, guru.ujian.create, dll)
         Route::resource('ujian', ManajemenUjianController::class);
 
-        // CRUD Soal
-        Route::resource('soal', SoalController::class);
-
-        // Route Khusus buat Tambah Section
+        // 3. Route Khusus: Simpan Section (FIX: Jangan pakai guru. lagi depannya)
         Route::post('/ujian/{id}/section', [ManajemenUjianController::class, 'storeSection'])
-            ->name('guru.ujian.section.store');
+            ->name('ujian.section.store'); // Hasil akhir: guru.ujian.section.store
 
-        // Route Form Tambah Soal (Butuh ID Section)
+        // 4. Route Khusus: Soal (FIX: Jangan pakai guru. lagi depannya)
         Route::get('/section/{section}/soal/create', [ManajemenUjianController::class, 'createSoal'])
-            ->name('guru.ujian.soal.create');
-
-        // Route Simpan Soal
+            ->name('ujian.soal.create'); // Hasil akhir: guru.ujian.soal.create
+            
         Route::post('/section/{section}/soal', [ManajemenUjianController::class, 'storeSoal'])
-            ->name('guru.ujian.soal.store');
+            ->name('ujian.soal.store'); // Hasil akhir: guru.ujian.soal.store
+
+        // Resource Soal
+        Route::resource('soal', SoalController::class);
 
     });

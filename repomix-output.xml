@@ -225,11 +225,13 @@ resources/
       secondary-button.blade.php
       text-input.blade.php
     guru/
-      create.blade.php
+      ujian/
+        create.blade.php
+        index.blade.php
+        show.blade.php
+        soal.create.blade.php
       dashboard.blade.php
       index.blade.php
-      show.blade.php
-      soal.create.blade.php
     layouts/
       app.blade.php
       guest.blade.php
@@ -320,467 +322,6 @@ vite.config.js
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="resources/views/guru/create.blade.php">
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buat Ujian Baru</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
-</head>
-<body class="bg-gray-100 text-slate-800">
-
-    <div class="flex min-h-screen">
-        {{-- Sidebar --}}
-        <x-dashboard-sidebar role="guru" active="ujian" />
-
-        <main class="flex-1 ml-20 p-8 transition-all duration-300">
-            
-            {{-- Header --}}
-            <div class="mb-6 flex items-center gap-3">
-                <a href="{{ route('guru.ujian.index') }}" class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 transition">
-                    <i data-lucide="arrow-left" size="20"></i>
-                </a>
-                <h1 class="text-2xl font-bold text-gray-800">Buat Ujian Baru</h1>
-            </div>
-
-            {{-- Form Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-3xl">
-                
-                <form action="{{ route('guru.ujian.store') }}" method="POST">
-                    @csrf
-
-                    {{-- 1. Judul Ujian --}}
-                    <div class="mb-6">
-                        <label class="block mb-2 text-sm font-medium text-gray-900">Judul Ujian</label>
-                        <input type="text" name="judul" value="{{ old('judul') }}" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                            placeholder="Contoh: Penilaian Harian Bahasa Inggris Chapter 1" required>
-                        @error('judul')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- 2. Deskripsi (Opsional) --}}
-                    <div class="mb-6">
-                        <label class="block mb-2 text-sm font-medium text-gray-900">Deskripsi (Opsional)</label>
-                        <textarea name="deskripsi" rows="3" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                            placeholder="Instruksi pengerjaan...">{{ old('deskripsi') }}</textarea>
-                    </div>
-
-                    {{-- Grid Layout untuk Waktu --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        
-                        {{-- 3. Waktu Mulai --}}
-                        <div>
-                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Mulai</label>
-                            <input type="datetime-local" name="waktu_mulai" value="{{ old('waktu_mulai') }}"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
-                            @error('waktu_mulai')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- 4. Waktu Selesai --}}
-                        <div>
-                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Selesai</label>
-                            <input type="datetime-local" name="waktu_selesai" value="{{ old('waktu_selesai') }}"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
-                            @error('waktu_selesai')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-
-                    {{-- 5. Durasi --}}
-                    <div class="mb-8">
-                        <label class="block mb-2 text-sm font-medium text-gray-900">Durasi Pengerjaan (Menit)</label>
-                        <input type="number" name="durasi_menit" value="{{ old('durasi_menit', 60) }}" min="1"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
-                        <p class="mt-1 text-xs text-gray-500">Berapa lama siswa boleh mengerjakan soal setelah menekan tombol mulai.</p>
-                        @error('durasi_menit')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Tombol Submit --}}
-                    <div class="flex justify-end gap-3">
-                        <a href="{{ route('guru.ujian.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
-                            Batal
-                        </a>
-                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition shadow-md">
-                            Simpan Ujian
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-
-        </main>
-    </div>
-
-    <script>
-        lucide.createIcons();
-    </script>
-</body>
-</html>
-</file>
-
-<file path="resources/views/guru/index.blade.php">
-{{-- resources/views/guru/ujian/index.blade.php --}}
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Manajemen Ujian</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
-</head>
-<body class="bg-gray-100 text-slate-800">
-
-    <div class="flex min-h-screen">
-        {{-- Sidebar --}}
-        <x-dashboard-sidebar role="guru" active="ujian" />
-
-        <main class="flex-1 ml-20 p-8">
-            {{-- Header --}}
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold">Daftar Ujian Anda</h1>
-                <a href="{{ route('guru.ujian.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
-                    <i data-lucide="plus"></i> Tambah Ujian
-                </a>
-            </div>
-
-            {{-- Alert Success --}}
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            {{-- Table --}}
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3">Judul</th>
-                            <th class="px-6 py-3">Kode</th>
-                            <th class="px-6 py-3">Waktu</th>
-                            <th class="px-6 py-3">Durasi</th>
-                            <th class="px-6 py-3">Status</th>
-                            <th class="px-6 py-3 text-right">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($ujian as $item)
-                            <tr class="bg-white hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-900">{{ $item->judul }}</td>
-                                <td class="px-6 py-4 font-mono">{{ $item->kode_ujian }}</td>
-                                <td class="px-6 py-4">
-                                    {{ $item->waktu_mulai->format('d M Y H:i') }}
-                                </td>
-                                <td class="px-6 py-4">{{ $item->durasi_menit }} Menit</td>
-                                <td class="px-6 py-4">
-                                    @if($item->is_published)
-                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Published</span>
-                                    @else
-                                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Draft</span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <a href="#" class="text-blue-600 hover:underline mr-3">Edit</a>
-                                    <a href="#" class="text-red-600 hover:underline">Hapus</a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="px-6 py-8 text-center text-gray-400">
-                                    Belum ada ujian. Klik tombol Tambah Ujian di atas!
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-            
-            {{-- Pagination --}}
-            <div class="mt-4">
-                {{ $ujian->links() }}
-            </div>
-        </main>
-    </div>
-
-    <script>lucide.createIcons();</script>
-</body>
-</html>
-</file>
-
-<file path="resources/views/guru/show.blade.php">
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Kelola Ujian - {{ $ujian->judul }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
-</head>
-<body class="bg-gray-100 text-slate-800">
-
-    <div class="flex min-h-screen">
-        <x-dashboard-sidebar role="guru" active="ujian" />
-
-        <main class="flex-1 ml-20 p-8">
-            
-            {{-- Header --}}
-            <div class="mb-6">
-                <a href="{{ route('guru.ujian.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2 transition">
-                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Daftar
-                </a>
-                
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h1 class="text-3xl font-bold text-gray-900">{{ $ujian->judul }}</h1>
-                        <div class="flex items-center gap-3 mt-2 text-sm">
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono font-bold">{{ $ujian->kode_ujian }}</span>
-                            <span class="text-gray-500 flex items-center gap-1">
-                                <i data-lucide="clock" size="14"></i> Total: {{ $ujian->durasi_menit }} Menit
-                            </span>
-                        </div>
-                    </div>
-                    
-                    {{-- Tombol Header --}}
-                    <div class="flex gap-2">
-                        @if(!$ujian->is_published)
-                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
-                                <i data-lucide="upload-cloud" size="18"></i> Publish
-                            </button>
-                        @else
-                            <span class="px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center gap-2 border border-green-200">
-                                <i data-lucide="check-circle" size="18"></i> Published
-                            </span>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- Pesan Sukses --}}
-            @if(session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            {{-- LOGIC: Cek apakah Section sudah ada? --}}
-            @if($ujian->sections->count() > 0)
-                
-                {{-- KONTEN UTAMA: Jika Section Ada --}}
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold text-gray-800">Daftar Section</h2>
-                        <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm">
-                            <i data-lucide="plus"></i> Tambah Section
-                        </button>
-                    </div>
-
-                    {{-- Looping Section --}}
-                    @foreach($ujian->sections as $section)
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                                <div>
-                                    <h3 class="font-bold text-gray-800 text-lg">{{ $section->judul }}</h3>
-                                    <p class="text-xs text-gray-500">Durasi: {{ $section->durasi_menit }} Menit • {{ $section->soal->count() }} Soal</p>
-                                </div>
-                                <div class="flex gap-2">
-                                   <a href="{{ route('guru.ujian.soal.create', $section->id) }}" 
-                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
-                                        <i data-lucide="plus-circle" size="14"></i> Tambah Soal
-                                    </a>
-                                    <button class="text-gray-400 hover:text-red-600 px-2">
-                                        <i data-lucide="trash-2" size="18"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {{-- Preview Soal (Kosong dulu) --}}
-                            <div class="p-6 text-center text-gray-400 text-sm italic">
-                                Belum ada soal di section ini.
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-            @else
-
-                {{-- EMPTY STATE: Jika Belum Ada Section --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px] flex flex-col items-center justify-center p-10 text-center">
-                    <div class="bg-blue-50 p-4 rounded-full mb-4">
-                        <i data-lucide="layers" size="40" class="text-blue-600"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-800 mb-2">Belum Ada Section</h3>
-                    <p class="text-gray-500 max-w-md mb-6">
-                        Tambahkan section (Misal: Listening, Reading) untuk mulai mengisi soal ujian.
-                    </p>
-                    <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition transform hover:scale-105">
-                        <i data-lucide="plus"></i> Tambah Section Baru
-                    </button>
-                </div>
-
-            @endif
-
-        </main>
-    </div>
-
-    {{-- MODAL POPUP TAMBAH SECTION --}}
-    <div id="modalSection" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-gray-800">Tambah Section Baru</h3>
-                <button onclick="document.getElementById('modalSection').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <i data-lucide="x" size="20"></i>
-                </button>
-            </div>
-            
-            <form action="{{ route('guru.ujian.section.store', $ujian->id) }}" method="POST" class="p-6">
-                @csrf
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Section</label>
-                    <input type="text" name="judul" placeholder="Contoh: Section 1 - Listening Comprehension" 
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
-                </div>
-                
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (Menit)</label>
-                    <input type="number" name="durasi_menit" value="20" min="1"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
-                    <p class="text-xs text-gray-500 mt-1">Siswa akan otomatis pindah section jika waktu habis.</p>
-                </div>
-
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="document.getElementById('modalSection').classList.add('hidden')" 
-                        class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
-                        Batal
-                    </button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-md">
-                        Simpan Section
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script>lucide.createIcons();</script>
-</body>
-</html>
-</file>
-
-<file path="resources/views/guru/soal.create.blade.php">
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <title>Tambah Soal - {{ $section->judul }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>body { font-family: 'Poppins', sans-serif; }</style>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
-    <script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
-</head>
-<body class="bg-gray-100 text-slate-800">
-
-    <div class="flex min-h-screen">
-        <x-dashboard-sidebar role="guru" active="ujian" />
-
-        <main class="flex-1 ml-20 p-8">
-            
-            {{-- Header --}}
-            <div class="mb-6">
-                <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2">
-                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Detail Ujian
-                </a>
-                <h1 class="text-2xl font-bold text-gray-800">Tambah Soal Baru</h1>
-                <p class="text-gray-500 text-sm">Menambahkan soal ke section: <span class="font-semibold text-blue-600">{{ $section->judul }}</span></p>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-4xl">
-                
-                <form action="{{ route('guru.ujian.soal.store', $section->id) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-
-                    {{-- Pertanyaan --}}
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-900 mb-2">Pertanyaan</label>
-                        <input id="pertanyaan" type="hidden" name="pertanyaan" value="{{ old('pertanyaan') }}">
-                        <trix-editor input="pertanyaan" class="trix-content min-h-[150px] rounded-lg border-gray-300"></trix-editor>
-                        @error('pertanyaan') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
-                    </div>
-
-                    {{-- Pilihan Ganda Grid --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        @foreach(['a', 'b', 'c', 'd', 'e'] as $opt)
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Pilihan {{ $opt }}</label>
-                            <div class="flex gap-2">
-                                <span class="flex items-center justify-center w-8 h-10 bg-gray-100 border border-gray-300 rounded font-bold uppercase text-gray-500">{{ $opt }}</span>
-                                <input type="text" name="pilihan_{{ $opt }}" value="{{ old('pilihan_'.$opt) }}"
-                                    class="flex-1 border border-gray-300 rounded-lg px-3 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-
-                    {{-- Kunci Jawaban & Bobot --}}
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-900 mb-2">Kunci Jawaban</label>
-                            <select name="kunci_jawaban" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:ring-blue-500 outline-none" required>
-                                <option value="" disabled selected>Pilih Kunci Jawaban...</option>
-                                <option value="a">A</option>
-                                <option value="b">B</option>
-                                <option value="c">C</option>
-                                <option value="d">D</option>
-                                <option value="e">E</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-900 mb-2">Bobot Nilai</label>
-                            <input type="number" name="bobot" value="5" min="1" 
-                                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-blue-500 outline-none" required>
-                            <p class="text-xs text-gray-500 mt-1">Nilai jika siswa menjawab benar.</p>
-                        </div>
-                    </div>
-
-                    {{-- Submit --}}
-                    <div class="flex justify-end gap-3">
-                        <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
-                            Batal
-                        </a>
-                        <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md">
-                            Simpan Soal
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-
-        </main>
-    </div>
-    <script>lucide.createIcons();</script>
-</body>
-</html>
-</file>
 
 <file path="app/Actions/Ujian/HitungSkorSectionAction.php">
 <?php
@@ -1493,215 +1034,6 @@ class VerifyEmailController extends Controller
         }
 
         return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
-    }
-}
-</file>
-
-<file path="app/Http/Controllers/Guru/DashboardController.php">
-<?php
-
-namespace App\Http\Controllers\Guru;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class DashboardController extends Controller
-{
-    public function index()
-    {
-        // 1. Ambil data Guru yang sedang login
-        $user = Auth::user();
-        $guru = $user->guru; // Relasi dari User ke Guru
-
-        if (!$guru) {
-            abort(403, 'Data profil guru belum lengkap. Hubungi Admin.');
-        }
-
-        // 2. Ambil Statistik
-        $totalUjian = $guru->ujian()->count();
-        
-        // Hitung ujian yang statusnya Published (Siap/Sedang jalan)
-        $ujianAktif = $guru->ujian()->where('is_published', true)->count();
-        
-        // Hitung total siswa yang pernah ikut ujian buatan guru ini (Lewat tabel Nilai -> Ujian -> Guru)
-        $totalPeserta = $guru->ujian()
-            ->withCount('sesiUjian') 
-            ->get()
-            ->sum('sesi_ujian_count');
-
-        // 3. Ambil 5 Ujian Terakhir 
-        $ujianTerbaru = $guru->ujian()
-            ->latest()
-            ->limit(5)
-            ->get();
-
-        return view('guru.dashboard', compact(
-            'guru', 
-            'totalUjian', 
-            'ujianAktif', 
-            'totalPeserta', 
-            'ujianTerbaru'
-        ));
-    }
-}
-</file>
-
-<file path="app/Http/Controllers/Guru/ManajemenUjianController.php">
-<?php
-
-namespace App\Http\Controllers\Guru;
-
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Ujian;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use App\Models\Section;
-use App\Models\Soal;
-
-class ManajemenUjianController extends Controller
-{
-    // 1. Halaman Daftar Ujian
-    public function index()
-    {
-        // Ambil ujian milik guru yang sedang login
-        $ujian = Ujian::where('guru_id', Auth::user()->guru->id)
-            ->latest()
-            ->paginate(10); // Kita kasih pagination biar rapi kalau datanya banyak
-
-        return view('guru.ujian.index', compact('ujian'));
-    }
-
-    // 2. Halaman Form Tambah Ujian
-    public function create()
-    {
-        return view('guru.ujian.create');
-    }
-
-    // 3. Proses Simpan Ujian Baru ke Database
-    public function store(Request $request)
-    {
-        // Validasi input biar ga asal-asalan
-        $request->validate([
-            'judul' => 'required|max:150',
-            'durasi_menit' => 'required|integer|min:1',
-            'waktu_mulai' => 'required|date',
-            'waktu_selesai' => 'required|date|after:waktu_mulai', // Selesai wajib setelah Mulai
-        ]);
-
-        // Bikin Kode Unik Otomatis (Misal: UJN-X7Z9)
-        $kodeUnik = strtoupper(Str::random(8));
-
-        // Simpan ke DB
-        Ujian::create([
-            'guru_id' => Auth::user()->guru->id,
-            'kode_ujian' => $kodeUnik,
-            'judul' => $request->judul,
-            'deskripsi' => $request->deskripsi,
-            'durasi_menit' => $request->durasi_menit,
-            'waktu_mulai' => $request->waktu_mulai,
-            'waktu_selesai' => $request->waktu_selesai,
-            'tipe_ujian' => 'exam', // Default
-            'is_published' => false, // Default draft dulu
-        ]);
-
-        return redirect()->route('guru.ujian.index')
-            ->with('success', 'Ujian berhasil dibuat! Kode: ' . $kodeUnik);
-    }
-
-    // 4: Halaman Detail Ujian (Buat Manage Soal)
-    public function show($id)
-    {
-        // 1. Ambil data ujian + section + soal
-        $ujian = Ujian::with(['sections.soal'])->findOrFail($id);
-
-        // 2. Security Check: Pastikan yang akses adalah pemilik ujian
-        if ($ujian->guru_id !== Auth::user()->guru->id) {
-            abort(403, 'Akses Ditolak: Ini bukan ujian punya lu bang!');
-        }
-        // 3. Lempar ke view detail
-        return view('guru.ujian.show', compact('ujian'));
-    }
-
-    // 5. Simpan Section Baru
-    public function storeSection(Request $request, $id)
-    {
-        $request->validate([
-            'judul' => 'required|string|max:100',
-            'durasi_menit' => 'required|integer|min:1',
-        ]);
-
-        $ujian = Ujian::findOrFail($id);
-
-        // Security Check
-        if ($ujian->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
-
-        // Simpan Section
-        // Urutan otomatis: hitung jumlah section yg ada + 1
-        $urutan = $ujian->sections()->count() + 1;
-
-        $ujian->sections()->create([
-            'judul' => $request->judul,
-            'durasi_menit' => $request->durasi_menit,
-            'urutan' => $urutan,
-            'tipe_section' => 'standard', // default
-        ]);
-
-        return redirect()->back()->with('success', 'Section berhasil ditambahkan!');
-    }
-
-    // 6. Tampilkan Form Input Soal
-    public function createSoal($sectionId)
-    {
-        $section = Section::with('ujian')->findOrFail($sectionId);
-
-        // Security Check: Punya guru ini ga?
-        if ($section->ujian->guru_id !== Auth::user()->guru->id) {
-            abort(403);
-        }
-
-        return view('guru.ujian.soal-create', compact('section'));
-    }
-
-    // 7. Simpan Soal ke Database
-    public function storeSoal(Request $request, $sectionId)
-    {
-        $request->validate([
-            'pertanyaan' => 'required',
-            'pilihan_a' => 'required',
-            'pilihan_b' => 'required',
-            'pilihan_c' => 'required',
-            'pilihan_d' => 'required',
-            // Pilihan E opsional, siapa tau cuma sampai D
-            'kunci_jawaban' => 'required|in:a,b,c,d,e',
-            'bobot' => 'required|integer|min:1',
-        ]);
-
-        $section = Section::findOrFail($sectionId);
-
-        // Hitung urutan soal otomatis
-        $urutan = $section->soal()->count() + 1;
-
-        Soal::create([
-            'section_id' => $sectionId,
-            'pertanyaan' => $request->pertanyaan,
-            'pilihan_a' => $request->pilihan_a,
-            'pilihan_b' => $request->pilihan_b,
-            'pilihan_c' => $request->pilihan_c,
-            'pilihan_d' => $request->pilihan_d,
-            'pilihan_e' => $request->pilihan_e,
-            'kunci_jawaban' => $request->kunci_jawaban,
-            'bobot' => $request->bobot,
-            'urutan' => $urutan,
-            'tipe_soal' => 'pilihan_ganda',
-        ]);
-
-        // Redirect balik ke halaman Detail Ujian (Show)
-        return redirect()->route('guru.ujian.show', $section->ujian_id)
-            ->with('success', 'Soal berhasil ditambahkan ke section ' . $section->judul);
     }
 }
 </file>
@@ -4411,43 +3743,6 @@ return new class extends Migration
 };
 </file>
 
-<file path="database/seeders/GuruSeeder.php">
-<?php
-
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
-use App\Models\Guru;
-use App\Models\User;
-
-class GuruSeeder extends Seeder
-{
-    public function run(): void
-    {
-        // Cari user spesifik berdasarkan username yang dibuat di UserSeeder
-        $userGuru = User::where('username', 'gurubahasa')->first();
-
-        // Fallback jika tidak ketemu username, cari berdasarkan role
-        if (! $userGuru) {
-            $userGuru = User::where('role', 'guru')->first();
-        }
-
-        if (! $userGuru) {
-            throw new \Exception('Seeder error: User guru belum ada. Pastikan UserSeeder dijalankan duluan.');
-        }
-
-        Guru::firstOrCreate(
-            ['user_id' => $userGuru->id],
-            [
-                'nip' => '194468600943',
-                'nama_lengkap' => 'Joana Olson',
-                'mata_pelajaran' => 'Bahasa Inggris',
-            ]
-        );
-    }
-}
-</file>
-
 <file path="database/seeders/KategoriSoalSeeder.php">
 <?php
 
@@ -5106,118 +4401,6 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 </button>
 </file>
 
-<file path="resources/views/components/dashboard-sidebar.blade.php">
-@props(['active' => 'dashboard', 'role' => 'siswa'])
-
-<div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50">
-
-    {{-- Menu Icon --}}
-    <div class="text-white mb-4 cursor-pointer">
-        <i data-lucide="menu" size="28"></i>
-    </div>
-
-    {{-- Navigation Items (Dynamic based on Role) --}}
-    @if($role === 'admin')
-        {{-- Admin Navigation --}}
-        <a href="{{ route('admin.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="layout-dashboard" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('admin.ujian.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'ujian' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="clipboard-list" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('admin.stats') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-
-    @elseif($role === 'guru')
-        {{-- Guru Navigation --}}
-        <a href="{{ route('guru.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="home" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('guru.soal.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'soal' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="file-text" size="28" class="text-white"></i>
-        </a>
-
-      <a href="#" 
-            onclick="alert('Fitur Statistik segera hadir!')"
-            class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-                <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-            </a>
-    @else
-        {{-- Siswa Navigation --}}
-        <a href="{{ route('siswa.dashboard') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'home' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="home" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('siswa.ujian.index') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'test' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="edit-3" size="28" class="text-white"></i>
-        </a>
-
-        <a href="{{ route('siswa.nilai') }}" 
-           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'analysis' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
-            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
-        </a>
-    @endif
-
-    {{-- Bottom Section (Settings + User) --}}
-    <div class="mt-auto flex flex-col items-center gap-6 mb-4">
-
-        {{-- Settings Icon --}}
-        <i data-lucide="settings" size="28" class="text-white/70 hover:text-white cursor-pointer transition"></i>
-
-        {{-- User Dropdown dengan Alpine.js --}}
-        <div class="relative" x-data="{ open: false }">
-            <div @click="open = !open" 
-                 class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-300 transition">
-                <i data-lucide="user" size="22" class="text-purple-700"></i>
-            </div>
-
-            {{-- Dropdown Menu --}}
-            <div x-show="open" 
-                 @click.away="open = false"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 scale-90"
-                 x-transition:enter-end="opacity-100 scale-100"
-                 x-transition:leave="transition ease-in duration-150"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-90"
-                 class="absolute left-[88px] bottom-0 bg-white shadow-lg rounded-xl p-3 border border-gray-200 w-40"
-                 style="display: none;">
-                
-                <div class="text-xs text-gray-500 px-3 pb-2 border-b mb-2">
-            {{-- Pastikan atribut nama sesuai database, biasanya name atau username --}}
-            <div class="font-semibold text-gray-700">{{ auth()->user()->username ?? auth()->user()->name }}</div>
-            
-            {{-- FIX: Tambahkan ->value karena role adalah Enum --}}
-            <div class="text-[10px]">{{ ucfirst(auth()->user()->role->value) }}</div>
-            </div>
-
-                <form action="{{ route('logout') }}" method="POST">
-                    @csrf
-                    <button type="submit" 
-                            class="w-full text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition text-center">
-                        <i data-lucide="log-out" size="16" class="inline mr-1"></i>
-                        Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-
-    </div>
-
-</div>
-</file>
-
 <file path="resources/views/components/dropdown-link.blade.php">
 <a {{ $attributes->merge(['class' => 'block w-full px-4 py-2 text-start text-sm leading-5 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-800 transition duration-150 ease-in-out']) }}>{{ $slot }}</a>
 </file>
@@ -5407,143 +4590,106 @@ $classes = ($active ?? false)
 <input @disabled($disabled) {{ $attributes->merge(['class' => 'border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm']) }}>
 </file>
 
-<file path="resources/views/guru/dashboard.blade.php">
+<file path="resources/views/guru/ujian/create.blade.php">
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Guru - CBT TOEFL</title>
+    <title>Buat Ujian Baru</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Poppins', sans-serif; } </style>
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
 </head>
 <body class="bg-gray-100 text-slate-800">
 
     <div class="flex min-h-screen">
-        {{-- 1. Panggil Sidebar --}}
-        <x-dashboard-sidebar role="guru" active="dashboard" />
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
 
-        {{-- 2. Konten Utama --}}
         <main class="flex-1 ml-20 p-8 transition-all duration-300">
             
             {{-- Header --}}
-            <header class="flex justify-between items-center mb-8">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800">Dashboard Guru</h1>
-                    <p class="text-gray-500 text-sm mt-1">Selamat datang, <span class="text-[#004e92] font-semibold">{{ $guru->nama_lengkap }}</span>!</p>
-                </div>
-                
-                {{-- Tombol Aksi Cepat (Sudah diperbaiki jadi Link) --}}
-                <a href="{{ route('guru.ujian.create') }}" class="bg-[#004e92] hover:bg-[#003d73] text-white px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition transform active:scale-95">
-                    <i data-lucide="plus-circle" size="18"></i> Buat Ujian Baru
+            <div class="mb-6 flex items-center gap-3">
+                <a href="{{ route('guru.ujian.index') }}" class="p-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 text-gray-600 transition">
+                    <i data-lucide="arrow-left" size="20"></i>
                 </a>
-            </header>
+                <h1 class="text-2xl font-bold text-gray-800">Buat Ujian Baru</h1>
+            </div>
 
-            {{-- Stats Cards --}}
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {{-- Card 1 --}}
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                            <i data-lucide="file-text" size="24"></i>
-                        </div>
+            {{-- Form Card --}}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 max-w-3xl">
+                
+                <form action="{{ route('guru.ujian.store') }}" method="POST">
+                    @csrf
+
+                    {{-- 1. Judul Ujian --}}
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Judul Ujian</label>
+                        <input type="text" name="judul" value="{{ old('judul') }}" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            placeholder="Contoh: Penilaian Harian Bahasa Inggris Chapter 1" required>
+                        @error('judul')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- 2. Deskripsi (Opsional) --}}
+                    <div class="mb-6">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Deskripsi (Opsional)</label>
+                        <textarea name="deskripsi" rows="3" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            placeholder="Instruksi pengerjaan...">{{ old('deskripsi') }}</textarea>
+                    </div>
+
+                    {{-- Grid Layout untuk Waktu --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        
+                        {{-- 3. Waktu Mulai --}}
                         <div>
-                            <p class="text-gray-500 text-xs font-medium uppercase">Total Ujian</p>
-                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalUjian }}</h3>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Mulai</label>
+                            <input type="datetime-local" name="waktu_mulai" value="{{ old('waktu_mulai') }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                            @error('waktu_mulai')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- 4. Waktu Selesai --}}
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Waktu Selesai</label>
+                            <input type="datetime-local" name="waktu_selesai" value="{{ old('waktu_selesai') }}"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                            @error('waktu_selesai')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
-                </div>
 
-                {{-- Card 2 --}}
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-green-50 text-green-600 rounded-xl">
-                            <i data-lucide="radio" size="24"></i>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium uppercase">Ujian Aktif</p>
-                            <h3 class="text-2xl font-bold text-gray-800">{{ $ujianAktif }}</h3>
-                        </div>
+                    {{-- 5. Durasi --}}
+                    <div class="mb-8">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Durasi Pengerjaan (Menit)</label>
+                        <input type="number" name="durasi_menit" value="{{ old('durasi_menit', 60) }}" min="1"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                        <p class="mt-1 text-xs text-gray-500">Berapa lama siswa boleh mengerjakan soal setelah menekan tombol mulai.</p>
+                        @error('durasi_menit')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
-                </div>
 
-                {{-- Card 3 --}}
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="flex items-center gap-4">
-                        <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                            <i data-lucide="users" size="24"></i>
-                        </div>
-                        <div>
-                            <p class="text-gray-500 text-xs font-medium uppercase">Total Peserta</p>
-                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalPeserta }}</h3>
-                        </div>
+                    {{-- Tombol Submit --}}
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ route('guru.ujian.index') }}" class="px-5 py-2.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                            Batal
+                        </a>
+                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 transition shadow-md">
+                            Simpan Ujian
+                        </button>
                     </div>
-                </div>
-            </section>
 
-            {{-- Tabel Ujian Terbaru --}}
-            <section class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                        <i data-lucide="clock" size="20" class="text-gray-400"></i> Ujian Terbaru Anda
-                    </h3>
-                    <a href="{{ route('guru.ujian.index') }}" class="text-sm text-[#004e92] hover:underline">Lihat Semua</a>
-                </div>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3">Judul Ujian</th>
-                                <th class="px-6 py-3">Kode</th>
-                                <th class="px-6 py-3">Waktu Mulai</th>
-                                <th class="px-6 py-3 text-center">Status</th>
-                                <th class="px-6 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @forelse($ujianTerbaru as $ujian)
-                                <tr class="bg-white hover:bg-gray-50 transition">
-                                    <td class="px-6 py-4 font-medium text-gray-900">
-                                        {{ $ujian->judul }}
-                                        <div class="text-xs text-gray-400 font-normal mt-0.5">
-                                            {{-- Handle Enum Display --}}
-                                            {{ ucfirst($ujian->tipe_ujian->value ?? $ujian->tipe_ujian) }} • {{ $ujian->durasi_menit }} Menit
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 font-mono text-xs">
-                                        <span class="bg-gray-100 px-2 py-1 rounded text-gray-600">{{ $ujian->kode_ujian }}</span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        {{ $ujian->waktu_mulai->format('d M Y, H:i') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        @if($ujian->is_published)
-                                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Published</span>
-                                        @else
-                                            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Draft</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        {{-- Link ke Halaman Detail/Kelola Soal --}}
-                                        <a href="{{ route('guru.ujian.show', $ujian->id) }}" class="text-blue-600 hover:text-blue-900 font-medium hover:underline">
-                                            Kelola
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
-                                        Belum ada ujian yang dibuat. Yuk bikin sekarang!
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                </form>
+            </div>
 
         </main>
     </div>
@@ -5551,6 +4697,454 @@ $classes = ($active ?? false)
     <script>
         lucide.createIcons();
     </script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/index.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen Ujian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            {{-- Header --}}
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Daftar Ujian Anda</h1>
+                <a href="{{ route('guru.ujian.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                    <i data-lucide="plus"></i> Tambah Ujian
+                </a>
+            </div>
+
+            {{-- Alert Success --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Table --}}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3">Judul</th>
+                            <th class="px-6 py-3">Kode</th>
+                            <th class="px-6 py-3">Waktu</th>
+                            <th class="px-6 py-3">Durasi</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($ujian as $item)
+                            <tr class="bg-white hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 font-medium text-gray-900">
+                                    <a href="{{ route('guru.ujian.show', $item->id) }}" class="hover:text-blue-600 hover:underline">
+                                        {{ $item->judul }}
+                                    </a>
+                                </td>
+                                <td class="px-6 py-4 font-mono">
+                                    <span class="bg-gray-100 px-2 py-1 rounded text-gray-600 border border-gray-200">{{ $item->kode_ujian }}</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ $item->waktu_mulai->format('d M Y, H:i') }}
+                                </td>
+                                <td class="px-6 py-4">{{ $item->durasi_menit }} Menit</td>
+                                <td class="px-6 py-4">
+                                    @if($item->is_published)
+                                        <span class="bg-green-100 text-green-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Published</span>
+                                    @else
+                                        <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Draft</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="{{ route('guru.ujian.show', $item->id) }}" class="text-blue-600 hover:text-blue-900 font-medium mr-3">Kelola</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-12 text-center text-gray-400 bg-gray-50">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i data-lucide="clipboard-list" size="40" class="mb-2 opacity-50"></i>
+                                        <p>Belum ada ujian. Klik tombol Tambah Ujian di atas!</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $ujian->links() }}
+            </div>
+        </main>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/show.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Kelola Ujian - {{ $ujian->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            
+            {{-- Header --}}
+            <div class="mb-6">
+                <a href="{{ route('guru.ujian.index') }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2 transition">
+                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Daftar
+                </a>
+                
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ $ujian->judul }}</h1>
+                        <div class="flex items-center gap-3 mt-2 text-sm">
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded font-mono font-bold">{{ $ujian->kode_ujian }}</span>
+                            <span class="text-gray-500 flex items-center gap-1">
+                                <i data-lucide="clock" size="14"></i> Total: {{ $ujian->durasi_menit }} Menit
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {{-- Tombol Header --}}
+                    <div class="flex gap-2">
+                        @if(!$ujian->is_published)
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+                                <i data-lucide="upload-cloud" size="18"></i> Publish
+                            </button>
+                        @else
+                            <span class="px-4 py-2 bg-green-100 text-green-700 rounded-lg flex items-center gap-2 border border-green-200">
+                                <i data-lucide="check-circle" size="18"></i> Published
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Pesan Sukses --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-6">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- LOGIC: Cek apakah Section sudah ada? --}}
+            @if($ujian->sections->count() > 0)
+                
+                {{-- KONTEN UTAMA: Jika Section Ada --}}
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-800">Daftar Section</h2>
+                        <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus"></i> Tambah Section
+                        </button>
+                    </div>
+
+                    {{-- Looping Section --}}
+                    @foreach($ujian->sections as $section)
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg">{{ $section->judul }}</h3>
+                                    <p class="text-xs text-gray-500">Durasi: {{ $section->durasi_menit }} Menit • {{ $section->soal->count() }} Soal</p>
+                                </div>
+                                <div class="flex gap-2">
+                                   <a href="{{ route('guru.ujian.soal.create', $section->id) }}" 
+                                    class="bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded text-sm font-medium transition flex items-center gap-1">
+                                        <i data-lucide="plus-circle" size="14"></i> Tambah Soal
+                                    </a>
+                                    <button class="text-gray-400 hover:text-red-600 px-2">
+                                        <i data-lucide="trash-2" size="18"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {{-- Preview Soal (Kosong dulu) --}}
+                            <div class="p-6 text-center text-gray-400 text-sm italic">
+                                Belum ada soal di section ini.
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+            @else
+
+                {{-- EMPTY STATE: Jika Belum Ada Section --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[400px] flex flex-col items-center justify-center p-10 text-center">
+                    <div class="bg-blue-50 p-4 rounded-full mb-4">
+                        <i data-lucide="layers" size="40" class="text-blue-600"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Belum Ada Section</h3>
+                    <p class="text-gray-500 max-w-md mb-6">
+                        Tambahkan section (Misal: Listening, Reading) untuk mulai mengisi soal ujian.
+                    </p>
+                    <button onclick="document.getElementById('modalSection').classList.remove('hidden')" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 transition transform hover:scale-105">
+                        <i data-lucide="plus"></i> Tambah Section Baru
+                    </button>
+                </div>
+
+            @endif
+
+        </main>
+    </div>
+
+    {{-- MODAL POPUP TAMBAH SECTION --}}
+    <div id="modalSection" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100">
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-gray-800">Tambah Section Baru</h3>
+                <button onclick="document.getElementById('modalSection').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
+            
+            <form action="{{ route('guru.ujian.section.store', $ujian->id) }}" method="POST" class="p-6">
+                @csrf
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Judul Section</label>
+                    <input type="text" name="judul" placeholder="Contoh: Section 1 - Listening Comprehension" 
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Durasi (Menit)</label>
+                    <input type="number" name="durasi_menit" value="20" min="1"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                    <p class="text-xs text-gray-500 mt-1">Siswa akan otomatis pindah section jika waktu habis.</p>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="document.getElementById('modalSection').classList.add('hidden')" 
+                        class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-md">
+                        Simpan Section
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/ujian/soal.create.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Tambah Soal - {{ $section->judul }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.0/dist/trix.css">
+    <script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            
+            {{-- Header --}}
+            <div class="mb-6">
+                <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-2">
+                    <i data-lucide="arrow-left" size="16"></i> Kembali ke Detail Ujian
+                </a>
+                <h1 class="text-2xl font-bold text-gray-800">Tambah Soal Baru</h1>
+                <p class="text-gray-500 text-sm">Menambahkan soal ke section: <span class="font-semibold text-blue-600">{{ $section->judul }}</span></p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-4xl">
+                
+                <form action="{{ route('guru.ujian.soal.store', $section->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+
+                    {{-- Pertanyaan --}}
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-900 mb-2">Pertanyaan</label>
+                        <input id="pertanyaan" type="hidden" name="pertanyaan" value="{{ old('pertanyaan') }}">
+                        <trix-editor input="pertanyaan" class="trix-content min-h-[150px] rounded-lg border-gray-300"></trix-editor>
+                        @error('pertanyaan') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
+                    </div>
+
+                    {{-- Pilihan Ganda Grid --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        @foreach(['a', 'b', 'c', 'd', 'e'] as $opt)
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1 uppercase">Pilihan {{ $opt }}</label>
+                            <div class="flex gap-2">
+                                <span class="flex items-center justify-center w-8 h-10 bg-gray-100 border border-gray-300 rounded font-bold uppercase text-gray-500">{{ $opt }}</span>
+                                <input type="text" name="pilihan_{{ $opt }}" value="{{ old('pilihan_'.$opt) }}"
+                                    class="flex-1 border border-gray-300 rounded-lg px-3 focus:ring-blue-500 focus:border-blue-500 outline-none" required>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Kunci Jawaban & Bobot --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-blue-50 p-6 rounded-xl border border-blue-100">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Kunci Jawaban</label>
+                            <select name="kunci_jawaban" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-white focus:ring-blue-500 outline-none" required>
+                                <option value="" disabled selected>Pilih Kunci Jawaban...</option>
+                                <option value="a">A</option>
+                                <option value="b">B</option>
+                                <option value="c">C</option>
+                                <option value="d">D</option>
+                                <option value="e">E</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-900 mb-2">Bobot Nilai</label>
+                            <input type="number" name="bobot" value="5" min="1" 
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-blue-500 outline-none" required>
+                            <p class="text-xs text-gray-500 mt-1">Nilai jika siswa menjawab benar.</p>
+                        </div>
+                    </div>
+
+                    {{-- Submit --}}
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ route('guru.ujian.show', $section->ujian_id) }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                            Batal
+                        </a>
+                        <button type="submit" class="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-md">
+                            Simpan Soal
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </main>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</file>
+
+<file path="resources/views/guru/index.blade.php">
+{{-- resources/views/guru/ujian/index.blade.php --}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Manajemen Ujian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Poppins', sans-serif; }</style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="ujian" />
+
+        <main class="flex-1 ml-20 p-8">
+            {{-- Header --}}
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Daftar Ujian Anda</h1>
+                <a href="{{ route('guru.ujian.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition">
+                    <i data-lucide="plus"></i> Tambah Ujian
+                </a>
+            </div>
+
+            {{-- Alert Success --}}
+            @if(session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            {{-- Table --}}
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3">Judul</th>
+                            <th class="px-6 py-3">Kode</th>
+                            <th class="px-6 py-3">Waktu</th>
+                            <th class="px-6 py-3">Durasi</th>
+                            <th class="px-6 py-3">Status</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @forelse($ujian as $item)
+                            <tr class="bg-white hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">{{ $item->judul }}</td>
+                                <td class="px-6 py-4 font-mono">{{ $item->kode_ujian }}</td>
+                                <td class="px-6 py-4">
+                                    {{ $item->waktu_mulai->format('d M Y H:i') }}
+                                </td>
+                                <td class="px-6 py-4">{{ $item->durasi_menit }} Menit</td>
+                                <td class="px-6 py-4">
+                                    @if($item->is_published)
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Published</span>
+                                    @else
+                                        <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Draft</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <a href="#" class="text-blue-600 hover:underline mr-3">Edit</a>
+                                    <a href="#" class="text-red-600 hover:underline">Hapus</a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-400">
+                                    Belum ada ujian. Klik tombol Tambah Ujian di atas!
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            {{-- Pagination --}}
+            <div class="mt-4">
+                {{ $ujian->links() }}
+            </div>
+        </main>
+    </div>
+
+    <script>lucide.createIcons();</script>
 </body>
 </html>
 </file>
@@ -5861,44 +5455,6 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
 });
-</file>
-
-<file path="routes/guru.php">
-<?php
-
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Guru\DashboardController;
-use App\Http\Controllers\Guru\ManajemenUjianController;
-use App\Http\Controllers\Guru\SoalController;
-
-Route::prefix('guru')
-    ->middleware(['auth', 'role:guru'])
-    ->name('guru.')
-    ->group(function () {
-        
-        // Dashboard Utama
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->name('dashboard');
-
-        // CRUD Ujian (INI YANG PENTING BANG, SUDAH DIAKTIFKAN)
-        Route::resource('ujian', ManajemenUjianController::class);
-
-        // CRUD Soal
-        Route::resource('soal', SoalController::class);
-
-        // Route Khusus buat Tambah Section
-        Route::post('/ujian/{id}/section', [ManajemenUjianController::class, 'storeSection'])
-            ->name('guru.ujian.section.store');
-
-        // Route Form Tambah Soal (Butuh ID Section)
-        Route::get('/section/{section}/soal/create', [ManajemenUjianController::class, 'createSoal'])
-            ->name('guru.ujian.soal.create');
-
-        // Route Simpan Soal
-        Route::post('/section/{section}/soal', [ManajemenUjianController::class, 'storeSoal'])
-            ->name('guru.ujian.soal.store');
-
-    });
 </file>
 
 <file path="storage/app/private/.gitignore">
@@ -8099,6 +7655,214 @@ class UjianController extends Controller
 }
 </file>
 
+<file path="app/Http/Controllers/Guru/DashboardController.php">
+<?php
+
+namespace App\Http\Controllers\Guru;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        // 1. Ambil data Guru yang sedang login
+        $user = Auth::user();
+        $guru = $user->guru; // Relasi dari User ke Guru
+
+        if (!$guru) {
+            abort(403, 'Data profil guru belum lengkap. Hubungi Admin.');
+        }
+
+        // 2. Ambil Statistik
+        $totalUjian = $guru->ujian()->count();
+        
+        // Hitung ujian yang statusnya Published (Siap/Sedang jalan)
+        $ujianAktif = $guru->ujian()->where('is_published', true)->count();
+        
+        // Hitung total siswa yang pernah ikut ujian buatan guru ini (Lewat tabel Nilai -> Ujian -> Guru)
+        $totalPeserta = $guru->ujian()
+            ->withCount('sesiUjian') 
+            ->get()
+            ->sum('sesi_ujian_count');
+
+        // 3. Ambil 5 Ujian Terakhir 
+        $ujianTerbaru = $guru->ujian()
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        return view('guru.dashboard', compact(
+            'guru', 
+            'totalUjian', 
+            'ujianAktif', 
+            'totalPeserta', 
+            'ujianTerbaru'
+        ));
+    }
+}
+</file>
+
+<file path="app/Http/Controllers/Guru/ManajemenUjianController.php">
+<?php
+
+namespace App\Http\Controllers\Guru;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Ujian;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use App\Models\Section;
+use App\Models\Soal;
+
+class ManajemenUjianController extends Controller
+{
+    // 1. Halaman Daftar Ujian
+    public function index()
+    {
+        // Ambil ujian milik guru yang sedang login
+        $ujian = Ujian::where('guru_id', Auth::user()->guru->id)
+            ->latest()
+            ->paginate(10); // Kita kasih pagination biar rapi kalau datanya banyak
+
+        return view('guru.ujian.index', compact('ujian'));
+    }
+
+    // 2. Halaman Form Tambah Ujian
+    public function create()
+    {
+        return view('guru.ujian.create');
+    }
+
+    // 3. Proses Simpan Ujian Baru ke Database
+    public function store(Request $request)
+    {
+        // Validasi input biar ga asal-asalan
+        $request->validate([
+            'judul' => 'required|max:150',
+            'durasi_menit' => 'required|integer|min:1',
+            'waktu_mulai' => 'required|date',
+            'waktu_selesai' => 'required|date|after:waktu_mulai', // Selesai wajib setelah Mulai
+        ]);
+
+        // Bikin Kode Unik Otomatis (Misal: UJN-X7Z9)
+        $kodeUnik = strtoupper(Str::random(8));
+
+        // Simpan ke DB
+        Ujian::create([
+            'guru_id' => Auth::user()->guru->id,
+            'kode_ujian' => $kodeUnik,
+            'judul' => $request->judul,
+            'deskripsi' => $request->deskripsi,
+            'durasi_menit' => $request->durasi_menit,
+            'waktu_mulai' => $request->waktu_mulai,
+            'waktu_selesai' => $request->waktu_selesai,
+            'tipe_ujian' => 'exam', // Default
+            'is_published' => false, // Default draft dulu
+        ]);
+
+        return redirect()->route('guru.ujian.index')
+            ->with('success', 'Ujian berhasil dibuat! Kode: ' . $kodeUnik);
+    }
+
+    // 4: Halaman Detail Ujian (Buat Manage Soal)
+    public function show($id)
+    {
+        // 1. Ambil data ujian + section + soal
+        $ujian = Ujian::with(['sections.soal'])->findOrFail($id);
+
+        // 2. Security Check: Pastikan yang akses adalah pemilik ujian
+        if ($ujian->guru_id !== Auth::user()->guru->id) {
+            abort(403, 'Akses Ditolak: Ini bukan ujian punya lu bang!');
+        }
+        // 3. Lempar ke view detail
+        return view('guru.ujian.show', compact('ujian'));
+    }
+
+    // 5. Simpan Section Baru
+    public function storeSection(Request $request, $id)
+    {
+        $request->validate([
+            'judul' => 'required|string|max:100',
+            'durasi_menit' => 'required|integer|min:1',
+        ]);
+
+        $ujian = \App\Models\Ujian::findOrFail($id);
+
+        // Security Check
+        if ($ujian->guru_id !== \Illuminate\Support\Facades\Auth::user()->guru->id) {
+            abort(403);
+        }
+
+        // Urutan otomatis
+        $urutan = $ujian->sections()->count() + 1;
+
+        $ujian->sections()->create([
+            'judul' => $request->judul,
+            'durasi_menit' => $request->durasi_menit,
+            'urutan' => $urutan,
+            'tipe_section' => 'standard', 
+        ]);
+
+        return redirect()->back()->with('success', 'Section berhasil ditambahkan!');
+    }
+
+    // 6. Tampilkan Form Input Soal
+    public function createSoal($sectionId)
+    {
+        $section = Section::with('ujian')->findOrFail($sectionId);
+
+        // Security Check: Punya guru ini ga?
+        if ($section->ujian->guru_id !== Auth::user()->guru->id) {
+            abort(403);
+        }
+
+        return view('guru.ujian.soal-create', compact('section'));
+    }
+
+    // 7. Simpan Soal ke Database
+    public function storeSoal(Request $request, $sectionId)
+    {
+        $request->validate([
+            'pertanyaan' => 'required',
+            'pilihan_a' => 'required',
+            'pilihan_b' => 'required',
+            'pilihan_c' => 'required',
+            'pilihan_d' => 'required',
+            // Pilihan E opsional, siapa tau cuma sampai D
+            'kunci_jawaban' => 'required|in:a,b,c,d,e',
+            'bobot' => 'required|integer|min:1',
+        ]);
+
+        $section = Section::findOrFail($sectionId);
+
+        // Hitung urutan soal otomatis
+        $urutan = $section->soal()->count() + 1;
+
+        Soal::create([
+            'section_id' => $sectionId,
+            'pertanyaan' => $request->pertanyaan,
+            'pilihan_a' => $request->pilihan_a,
+            'pilihan_b' => $request->pilihan_b,
+            'pilihan_c' => $request->pilihan_c,
+            'pilihan_d' => $request->pilihan_d,
+            'pilihan_e' => $request->pilihan_e,
+            'kunci_jawaban' => $request->kunci_jawaban,
+            'bobot' => $request->bobot,
+            'urutan' => $urutan,
+            'tipe_soal' => 'pilihan_ganda',
+        ]);
+
+        // Redirect balik ke halaman Detail Ujian (Show)
+        return redirect()->route('guru.ujian.show', $section->ujian_id)
+            ->with('success', 'Soal berhasil ditambahkan ke section ' . $section->judul);
+    }
+}
+</file>
+
 <file path="app/Http/Controllers/Guru/SoalController.php">
 <?php
 
@@ -9171,6 +8935,43 @@ class DummyUjianSeeder extends Seeder
 }
 </file>
 
+<file path="database/seeders/GuruSeeder.php">
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Guru;
+use App\Models\User;
+
+class GuruSeeder extends Seeder
+{
+    public function run(): void
+    {
+        // Cari user spesifik berdasarkan username yang dibuat di UserSeeder
+        $userGuru = User::where('username', 'gurubahasa')->first();
+
+        // Fallback jika tidak ketemu username, cari berdasarkan role
+        if (! $userGuru) {
+            $userGuru = User::where('role', 'guru')->first();
+        }
+
+        if (! $userGuru) {
+            throw new \Exception('Seeder error: User guru belum ada. Pastikan UserSeeder dijalankan duluan.');
+        }
+
+        Guru::firstOrCreate(
+            ['user_id' => $userGuru->id],
+            [
+                'nip' => '194468600943',
+                'nama_lengkap' => 'Joana Olson',
+                'mata_pelajaran' => 'Bahasa Inggris',
+            ]
+        );
+    }
+}
+</file>
+
 <file path="database/seeders/SiswaSeeder.php">
 <?php
 
@@ -9234,6 +9035,266 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 Alpine.start();
+</file>
+
+<file path="resources/views/components/dashboard-sidebar.blade.php">
+@props(['active' => 'dashboard', 'role' => 'siswa'])
+
+<div class="w-20 bg-[#004e92] h-screen fixed left-0 top-0 flex flex-col items-center py-6 gap-8 z-50">
+
+    {{-- Menu Icon --}}
+    <div class="text-white mb-4 cursor-pointer">
+        <i data-lucide="menu" size="28"></i>
+    </div>
+
+    {{-- Navigation Items (Dynamic based on Role) --}}
+    @if($role === 'admin')
+        {{-- Admin Navigation --}}
+        <a href="{{ route('admin.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="layout-dashboard" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('admin.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'ujian' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="clipboard-list" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('admin.stats') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+        </a>
+
+    @elseif($role === 'guru')
+        {{-- Guru Navigation --}}
+        <a href="{{ route('guru.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'dashboard' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="home" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('guru.soal.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'soal' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="file-text" size="28" class="text-white"></i>
+        </a>
+
+      <a href="#" 
+            onclick="alert('Fitur Statistik segera hadir!')"
+            class="p-3 rounded-xl cursor-pointer transition {{ $active === 'stats' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+                <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+            </a>
+    @else
+        {{-- Siswa Navigation --}}
+        <a href="{{ route('siswa.dashboard') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'home' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="home" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('siswa.ujian.index') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'test' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="edit-3" size="28" class="text-white"></i>
+        </a>
+
+        <a href="{{ route('siswa.nilai') }}" 
+           class="p-3 rounded-xl cursor-pointer transition {{ $active === 'analysis' ? 'bg-white/20' : 'text-white/70 hover:text-white' }}">
+            <i data-lucide="bar-chart-2" size="28" class="text-white"></i>
+        </a>
+    @endif
+
+    {{-- Bottom Section (Settings + User) --}}
+    <div class="mt-auto flex flex-col items-center gap-6 mb-4">
+
+        {{-- Settings Icon --}}
+        <i data-lucide="settings" size="28" class="text-white/70 hover:text-white cursor-pointer transition"></i>
+
+        {{-- User Dropdown dengan Alpine.js --}}
+        <div class="relative" x-data="{ open: false }">
+            <div @click="open = !open" 
+                 class="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-300 transition">
+                <i data-lucide="user" size="22" class="text-purple-700"></i>
+            </div>
+
+            {{-- Dropdown Menu --}}
+            <div x-show="open" 
+                 @click.away="open = false"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-90"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-90"
+                 class="absolute left-[88px] bottom-0 bg-white shadow-lg rounded-xl p-3 border border-gray-200 w-40"
+                 style="display: none;">
+                
+                <div class="text-xs text-gray-500 px-3 pb-2 border-b mb-2">
+            {{-- Pastikan atribut nama sesuai database, biasanya name atau username --}}
+            <div class="font-semibold text-gray-700">{{ auth()->user()->username ?? auth()->user()->name }}</div>
+            
+            {{-- FIX: Tambahkan ->value karena role adalah Enum --}}
+            <div class="text-[10px]">{{ ucfirst(auth()->user()->role->value) }}</div>
+            </div>
+
+                <form action="{{ route('logout') }}" method="POST">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full text-sm font-medium text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition text-center">
+                        <i data-lucide="log-out" size="16" class="inline mr-1"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+</file>
+
+<file path="resources/views/guru/dashboard.blade.php">
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Guru - CBT TOEFL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-gray-100 text-slate-800">
+
+    <div class="flex min-h-screen">
+        {{-- 1. Panggil Sidebar --}}
+        <x-dashboard-sidebar role="guru" active="dashboard" />
+
+        {{-- 2. Konten Utama --}}
+        <main class="flex-1 ml-20 p-8 transition-all duration-300">
+            
+            {{-- Header --}}
+            <header class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Dashboard Guru</h1>
+                    <p class="text-gray-500 text-sm mt-1">Selamat datang, <span class="text-[#004e92] font-semibold">{{ $guru->nama_lengkap }}</span>!</p>
+                </div>
+                
+                {{-- Tombol Aksi Cepat (Sudah diperbaiki jadi Link) --}}
+                <a href="{{ route('guru.ujian.create') }}" class="bg-[#004e92] hover:bg-[#003d73] text-white px-5 py-2.5 rounded-xl shadow-md flex items-center gap-2 transition transform active:scale-95">
+                    <i data-lucide="plus-circle" size="18"></i> Buat Ujian Baru
+                </a>
+            </header>
+
+            {{-- Stats Cards --}}
+            <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {{-- Card 1 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                            <i data-lucide="file-text" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Total Ujian</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalUjian }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card 2 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-green-50 text-green-600 rounded-xl">
+                            <i data-lucide="radio" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Ujian Aktif</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $ujianAktif }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Card 3 --}}
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-purple-50 text-purple-600 rounded-xl">
+                            <i data-lucide="users" size="24"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-medium uppercase">Total Peserta</p>
+                            <h3 class="text-2xl font-bold text-gray-800">{{ $totalPeserta }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Tabel Ujian Terbaru --}}
+            <section class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                        <i data-lucide="clock" size="20" class="text-gray-400"></i> Ujian Terbaru Anda
+                    </h3>
+                    <a href="{{ route('guru.ujian.index') }}" class="text-sm text-[#004e92] hover:underline">Lihat Semua</a>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3">Judul Ujian</th>
+                                <th class="px-6 py-3">Kode</th>
+                                <th class="px-6 py-3">Waktu Mulai</th>
+                                <th class="px-6 py-3 text-center">Status</th>
+                                <th class="px-6 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse($ujianTerbaru as $ujian)
+                                <tr class="bg-white hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 font-medium text-gray-900">
+                                        {{ $ujian->judul }}
+                                        <div class="text-xs text-gray-400 font-normal mt-0.5">
+                                            {{-- Handle Enum Display --}}
+                                            {{ ucfirst($ujian->tipe_ujian->value ?? $ujian->tipe_ujian) }} • {{ $ujian->durasi_menit }} Menit
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 font-mono text-xs">
+                                        <span class="bg-gray-100 px-2 py-1 rounded text-gray-600">{{ $ujian->kode_ujian }}</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {{ $ujian->waktu_mulai->format('d M Y, H:i') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-center">
+                                        @if($ujian->is_published)
+                                            <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Published</span>
+                                        @else
+                                            <span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Draft</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-right">
+                                        {{-- Link ke Halaman Detail/Kelola Soal --}}
+                                        <a href="{{ route('guru.ujian.show', $ujian->id) }}" class="text-blue-600 hover:text-blue-900 font-medium hover:underline">
+                                            Kelola
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-8 text-center text-gray-400">
+                                        Belum ada ujian yang dibuat. Yuk bikin sekarang!
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
 </file>
 
 <file path="resources/views/layouts/app.blade.php">
@@ -9878,6 +9939,43 @@ Schedule::command('leaderboard:update')
 
 // Bersihin sampah cache tiap jam 2 pagi
 //Schedule::command('cache:clear')->dailyAt('02:00');
+</file>
+
+<file path="routes/guru.php">
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Guru\DashboardController;
+use App\Http\Controllers\Guru\ManajemenUjianController;
+use App\Http\Controllers\Guru\SoalController;
+
+Route::prefix('guru')
+    ->middleware(['auth', 'role:guru'])
+    ->name('guru.') 
+    ->group(function () {
+        
+        // 1. Dashboard Utama (Jadi: guru.dashboard)
+        Route::get('/dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
+
+        // 2. CRUD Ujian (Jadi: guru.ujian.index, guru.ujian.create, dll)
+        Route::resource('ujian', ManajemenUjianController::class);
+
+        // 3. Route Khusus: Simpan Section (FIX: Jangan pakai guru. lagi depannya)
+        Route::post('/ujian/{id}/section', [ManajemenUjianController::class, 'storeSection'])
+            ->name('ujian.section.store'); // Hasil akhir: guru.ujian.section.store
+
+        // 4. Route Khusus: Soal (FIX: Jangan pakai guru. lagi depannya)
+        Route::get('/section/{section}/soal/create', [ManajemenUjianController::class, 'createSoal'])
+            ->name('ujian.soal.create'); // Hasil akhir: guru.ujian.soal.create
+            
+        Route::post('/section/{section}/soal', [ManajemenUjianController::class, 'storeSoal'])
+            ->name('ujian.soal.store'); // Hasil akhir: guru.ujian.soal.store
+
+        // Resource Soal
+        Route::resource('soal', SoalController::class);
+
+    });
 </file>
 
 <file path=".env.example">
@@ -11161,119 +11259,6 @@ enum TipeSoal: string
 }
 </file>
 
-<file path="app/Http/Controllers/AuthController.php">
-<?php
-
-declare(strict_types=1);
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\{RedirectResponse, Request};
-use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
-use App\Models\User;
-
-class AuthController extends Controller
-{
-    /**
-     * Tampilkan halaman login
-     */
-    public function showLoginForm(): View
-    {
-        return view('auth.login');
-    }
-
-    /**
-     * Proses login TANPA validasi role manual (Otomatis deteksi)
-     */
-    public function login(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
-            // 'role' => 'nullable|in:siswa,guru,admin', // Gak perlu validasi role di request
-        ], [
-            'username.required' => 'Username/NIS wajib diisi',
-            'password.required' => 'Password wajib diisi',
-        ]);
-
-        $login = $request->username;
-
-        // 1. Cari user
-        $user = User::where('username', $login)
-            ->orWhere('email', $login)
-            ->first();
-
-        if (! $user) {
-            return back()->withErrors([
-                'username' => 'NIS / Username tidak ditemukan',
-            ]);
-        }
-
-        // 2. Cek aktif SEBELUM dianggap login sah
-        if (! $user->is_active) {
-            return back()->withErrors([
-                'username' => 'Akun tidak aktif',
-            ]);
-        }
-
-        // 3. Auth (tanpa role)
-        if (! Auth::attempt([
-            'username' => $user->username,
-            'password' => $request->password,
-        ])) {
-            return back()->withErrors([
-                'password' => 'Password salah',
-            ]);
-        }
-
-        // 4. Session baru dianggap sah DI SINI
-        $request->session()->regenerate();
-
-        // 5. Validasi role DIBUANG SAJA biar gak error salah pilih
-        // if ($request->filled('role') && $user->role->value !== $request->role) {
-        //     Auth::logout();
-        //     return back()->withErrors([
-        //         'role' => 'Role tidak sesuai dengan akun',
-        //     ]);
-        // }
-
-        // 6. Redirect sesuai role (Sistem otomatis tau dia siapa dari database)
-        return $this->redirectToDashboard($user->role);
-    }
-
-    /**
-     * Logout user
-     */
-    public function logout(Request $request): RedirectResponse
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')
-            ->with('success', 'Anda berhasil logout');
-    }
-
-    /**
-     * Redirect ke dashboard sesuai role
-     */
-    private function redirectToDashboard($role): RedirectResponse
-    {
-        // LOGIC FIX:
-        // Kalau $role itu String biasa, ya pake langsung.
-        $roleName = (is_object($role) && isset($role->value)) ? $role->value : $role;
-
-        return match($roleName) {
-            'siswa' => redirect()->route('siswa.dashboard'),
-            'guru' => redirect()->route('guru.dashboard'),
-            'admin' => redirect()->route('admin.dashboard'),
-            default => redirect()->route('landing'),
-        };
-    }
-}
-</file>
-
 <file path="app/Http/Middleware/CheckRole.php">
 <?php
 
@@ -12482,6 +12467,119 @@ class DashboardController extends Controller
             'sesiTerakhir'   => $sesiTerakhir,
             'ujianAktif'     => $ujianAktif, 
         ]);
+    }
+}
+</file>
+
+<file path="app/Http/Controllers/AuthController.php">
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\{RedirectResponse, Request};
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+use App\Models\User;
+
+class AuthController extends Controller
+{
+    /**
+     * Tampilkan halaman login
+     */
+    public function showLoginForm(): View
+    {
+        return view('auth.login');
+    }
+
+    /**
+     * Proses login TANPA validasi role manual (Otomatis deteksi)
+     */
+    public function login(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+            // 'role' => 'nullable|in:siswa,guru,admin', // Gak perlu validasi role di request
+        ], [
+            'username.required' => 'Username/NIS wajib diisi',
+            'password.required' => 'Password wajib diisi',
+        ]);
+
+        $login = $request->username;
+
+        // 1. Cari user
+        $user = User::where('username', $login)
+            ->orWhere('email', $login)
+            ->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'username' => 'NIS / Username tidak ditemukan',
+            ]);
+        }
+
+        // 2. Cek aktif SEBELUM dianggap login sah
+        if (! $user->is_active) {
+            return back()->withErrors([
+                'username' => 'Akun tidak aktif',
+            ]);
+        }
+
+        // 3. Auth (tanpa role)
+        if (! Auth::attempt([
+            'username' => $user->username,
+            'password' => $request->password,
+        ])) {
+            return back()->withErrors([
+                'password' => 'Password salah',
+            ]);
+        }
+
+        // 4. Session baru dianggap sah DI SINI
+        $request->session()->regenerate();
+
+        // 5. Validasi role DIBUANG SAJA biar gak error salah pilih
+        // if ($request->filled('role') && $user->role->value !== $request->role) {
+        //     Auth::logout();
+        //     return back()->withErrors([
+        //         'role' => 'Role tidak sesuai dengan akun',
+        //     ]);
+        // }
+
+        // 6. Redirect sesuai role (Sistem otomatis tau dia siapa dari database)
+        return $this->redirectToDashboard($user->role);
+    }
+
+    /**
+     * Logout user
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login')
+            ->with('success', 'Anda berhasil logout');
+    }
+
+    /**
+     * Redirect ke dashboard sesuai role
+     */
+    private function redirectToDashboard($role): RedirectResponse
+    {
+        // LOGIC FIX:
+        // Kalau $role itu String biasa, ya pake langsung.
+        $roleName = (is_object($role) && isset($role->value)) ? $role->value : $role;
+
+        return match($roleName) {
+            'siswa' => redirect()->route('siswa.dashboard'),
+            'guru' => redirect()->route('guru.dashboard'),
+            'admin' => redirect()->route('admin.dashboard'),
+            default => redirect()->route('landing'),
+        };
     }
 }
 </file>

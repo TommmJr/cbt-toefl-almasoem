@@ -82,22 +82,21 @@ class ManajemenUjianController extends Controller
             'durasi_menit' => 'required|integer|min:1',
         ]);
 
-        $ujian = Ujian::findOrFail($id);
+        $ujian = \App\Models\Ujian::findOrFail($id);
 
         // Security Check
-        if ($ujian->guru_id !== Auth::user()->guru->id) {
+        if ($ujian->guru_id !== \Illuminate\Support\Facades\Auth::user()->guru->id) {
             abort(403);
         }
 
-        // Simpan Section
-        // Urutan otomatis: hitung jumlah section yg ada + 1
+        // Urutan otomatis
         $urutan = $ujian->sections()->count() + 1;
 
         $ujian->sections()->create([
             'judul' => $request->judul,
             'durasi_menit' => $request->durasi_menit,
             'urutan' => $urutan,
-            'tipe_section' => 'standard', // default
+            'tipe_section' => 'standard', 
         ]);
 
         return redirect()->back()->with('success', 'Section berhasil ditambahkan!');
