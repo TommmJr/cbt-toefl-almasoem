@@ -8,6 +8,7 @@ use App\Models\Ujian;
 use App\Models\SesiUjian;
 use App\Models\Jawaban;
 use App\Models\Soal; 
+use App\Models\Nilai; 
 use App\Services\TokenUjianService;
 use App\Actions\Ujian\AutoSubmitSectionAction;
 use App\Enums\StatusUjian;
@@ -134,13 +135,11 @@ class UjianController extends Controller
 
     /**
      * AUTOSAVE JAWABAN REALTIME DAN SIMPAN
-     * (INI YANG KITA PERBAIKI)
      */
     public function simpanJawaban(
         Request $request,
         AutoSubmitSectionAction $autoSubmit
     ) {
-        // Validasi
         $request->validate([
             'sesi_id' => 'required|exists:sesi_ujians,id',
             'soal_id' => 'required|exists:soal,id',
@@ -149,24 +148,19 @@ class UjianController extends Controller
         $sesi = SesiUjian::findOrFail($request->sesi_id);
         $sesi->pastikanMilikSiswa(auth()->user()->siswa->id);
 
-        // Cek apakah waktu habis
         if ($sesi->isSectionExpired()) {
             return response()->json(['locked' => true, 'message' => 'Waktu habis'], 403);
         }
 
-        // Ambil data soal
         $soal = Soal::findOrFail($request->soal_id);
 
-        // Siapkan data update dasar
         $dataUpdate = [
             'sesi_ujian_id' => $sesi->id,
             'soal_id' => $soal->id,
             'waktu_jawab' => now(),
         ];
 
-        // LOGIC PENYIMPANAN BERDASARKAN TIPE SOAL
         if ($soal->tipe_soal === 'writing') {
-            // --- LOGIC ESSAY ---
             $request->validate([
                 'jawaban_essay' => 'required|string',
             ]);
@@ -175,23 +169,18 @@ class UjianController extends Controller
             $dataUpdate['jumlah_kata'] = str_word_count(strip_tags($request->jawaban_essay));
 
         } else {
-            // --- LOGIC PILIHAN GANDA ---
             $request->validate([
                 'jawaban_pilihan' => 'required|string',
             ]);
 
             $dataUpdate['jawaban_pilihan'] = $request->jawaban_pilihan;
             
-            // Cek Jawaban Benar (Case Insensitive biar aman)
             $isBenar = strtoupper((string)$request->jawaban_pilihan) === strtoupper((string)$soal->jawaban_benar);
             
             $dataUpdate['is_benar'] = $isBenar;
-            
-            // FIX PENTING: Pake 'bobot_nilai' sesuai database lu
             $dataUpdate['skor'] = $isBenar ? $soal->bobot_nilai : 0;
         }
 
-        // Simpan ke Database
         $jawaban = Jawaban::updateOrCreate(
             [
                 'sesi_ujian_id' => $sesi->id,
@@ -208,7 +197,7 @@ class UjianController extends Controller
     }
 
     /**
-     * HASIL UJIAN
+     * HASIL UJIAN (FIXED: KIRIM DATA NILAI KE VIEW)
      */
     public function hasil($sesiId)
     {
@@ -221,9 +210,15 @@ class UjianController extends Controller
             abort(403, 'Ujian belum selesai');
         }
 
+       
+        $nilai = Nilai::where('sesi_ujian_id', $sesi->id)->first();
+
+       
+        
         return view('siswa.ujian.hasil', [
             'sesi' => $sesi,
-            'totalSkor' => $sesi->jawaban->sum('skor'),
+            'nilai' => $nilai,
+            'totalSkor' => $nilai->skor_total ?? 0,
         ]);
     }
 }

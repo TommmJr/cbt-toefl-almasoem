@@ -41,17 +41,19 @@
                 @if($active == 'ujian') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
             </a>
             
-            {{-- Statistik --}}
-            <a href="#" onclick="alert('Fitur Statistik Segera Hadir!')"
-               class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap text-white/70 hover:bg-white/10 hover:text-white">
+            {{-- Analisis Nilai --}}
+            <a href="{{ route('guru.analisis.index') }}"
+               class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
+               {{ $active == 'analisis' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                 <i data-lucide="bar-chart-2" class="w-6 h-6 shrink-0"></i>
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Analisis Nilai</span>
+                @if($active == 'analisis') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
             </a>
         @endif
 
 
         {{-- =========================================== --}}
-        {{-- MENU KHUSUS SISWA (INI YANG DIBENERIN) --}}
+        {{-- MENU KHUSUS SISWA --}}
         {{-- =========================================== --}}
         @if($role === 'siswa')
             {{-- Beranda --}}
@@ -59,7 +61,6 @@
                class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
                {{ $active == 'dashboard' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                 <i data-lucide="home" class="w-6 h-6 shrink-0"></i>
-                {{-- Penambahan class: opacity-0 group-hover:opacity-100 --}}
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Beranda</span>
                 @if($active == 'dashboard') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
             </a>
@@ -69,7 +70,6 @@
                class="flex items-center gap-4 px-3 py-3.5 rounded-xl transition-all duration-200 relative overflow-hidden whitespace-nowrap
                {{ $active == 'ujian' ? 'bg-white/20 text-white shadow-inner' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                 <i data-lucide="pen-tool" class="w-6 h-6 shrink-0"></i>
-                {{-- Penambahan class: opacity-0 group-hover:opacity-100 --}}
                 <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">Ujian Saya</span>
                 @if($active == 'ujian') <div class="absolute left-0 top-3 bottom-3 w-1 bg-yellow-400 rounded-r-full"></div> @endif
             </a>

@@ -122,12 +122,18 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::delete('/ujian/token/{id}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'hapusTokenSiswa'])
         ->name('ujian.hapus_token_siswa');
 
-    // 8. PENILAIAN UJIAN (Khusus untuk bagian Writing)
-    Route::get('/ujian/{ujian}/koreksi-writing/{siswa}', [PenilaianController::class, 'koreksiWriting'])
-        ->name('penilaian.writing'); 
-
-    Route::post('/ujian/{ujian}/koreksi-writing/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])
-        ->name('penilaian.store_writing'); 
+   // 8. MANAJEMEN PENILAIAN & ANALISIS (Arsitektur Baru)
+    Route::prefix('analisis')->name('analisis.')->group(function () {
+    // List Semua Ujian (Halaman Index)
+    Route::get('/', [PenilaianController::class, 'index'])->name('index');
+    
+    // List Siswa per Ujian (Halaman Show)
+    Route::get('/{ujian}', [PenilaianController::class, 'show'])->name('show');
+    
+    // Form Koreksi Writing (Logic Lama, Pindah Route)
+    Route::get('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'koreksiWriting'])->name('koreksi');
+    Route::post('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])->name('simpan');
+});
 });
 
 /*

@@ -14,7 +14,6 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         
-        /* Print Style */
         @media print {
             .sidebar, .no-print { display: none !important; }
             main { margin-left: 0 !important; padding: 0 !important; }
@@ -81,6 +80,11 @@
             </button>
         </div>
 
+        {{-- PASTIKAN VARIABLE $nilai ADA (Ambil dari Controller) --}}
+        @php
+            $finalScore = $nilai->skor_total ?? 0;
+        @endphp
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-in">
 
             {{-- KOLOM KIRI: RINGKASAN SKOR --}}
@@ -94,15 +98,15 @@
                     
                     <div class="animate-scale-up inline-block">
                         <span class="text-7xl font-extrabold text-[#004e92] tracking-tighter">
-                            {{ $totalSkor }}
+                            {{ $finalScore }}
                         </span>
                     </div>
 
                     {{-- Logic Predikat Sederhana --}}
                     @php
                         $predikat = match(true) {
-                            $totalSkor >= 550 => ['label' => 'EXCELLENT', 'color' => 'bg-green-100 text-green-700 border-green-200'],
-                            $totalSkor >= 450 => ['label' => 'GOOD', 'color' => 'bg-blue-100 text-blue-700 border-blue-200'],
+                            $finalScore >= 550 => ['label' => 'EXCELLENT', 'color' => 'bg-green-100 text-green-700 border-green-200'],
+                            $finalScore >= 450 => ['label' => 'GOOD', 'color' => 'bg-blue-100 text-blue-700 border-blue-200'],
                             default           => ['label' => 'FAIR', 'color' => 'bg-yellow-100 text-yellow-700 border-yellow-200'],
                         };
                     @endphp
@@ -125,7 +129,7 @@
                     </div>
                 </div>
 
-                {{-- DETAIL SKOR PER SECTION --}}
+                {{-- DETAIL SKOR PER SECTION (FIXED: AMBIL LANGSUNG DARI DB) --}}
                 <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
                     <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <i data-lucide="bar-chart-2" size="20" class="text-[#004e92]"></i>
@@ -135,17 +139,15 @@
                     <div class="space-y-4">
                         @foreach ($sesi->ujian->sections as $section)
                             @php
-                                // Hitung skor kasar per section (Logic Sederhana)
-                                $sectionScore = 0;
-                                foreach($section->soal as $soal) {
-                                    $jawaban = $sesi->jawaban->firstWhere('soal_id', $soal->id);
-                                    if($jawaban && $jawaban->is_benar) {
-                                        $sectionScore += $soal->bobot_nilai;
-                                    }
-                                }
-                                // Konversi dummy: Skor asli * 10 (biar keliatan gede ala TOEFL)
-                                // Nanti bisa diganti logic konversi TOEFL beneran
-                                $convertedScore = $sectionScore * 10; 
+                                // FIX: Ambil nilai asli dari Tabel NILAI, jangan hitung manual lagi.
+                                // Ini biar nilai Writing dari Guru kebaca!
+                                $skorTampil = match($section->tipe_section->value ?? 'default') {
+                                    'listening' => $nilai->skor_listening ?? 0,
+                                    'structure' => $nilai->skor_structure ?? 0,
+                                    'reading'   => $nilai->skor_reading ?? 0,
+                                    'writing'   => $nilai->skor_writing ?? 0, // 🔥 INI YANG PENTING
+                                    default     => 0
+                                };
                                 
                                 $icon = match($section->tipe_section->value ?? 'default') {
                                     'listening' => 'headphones',
@@ -170,7 +172,7 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="block font-bold text-gray-800 text-lg">{{ $convertedScore }}</span>
+                                    <span class="block font-bold text-gray-800 text-lg">{{ $skorTampil }}</span>
                                 </div>
                             </div>
                         @endforeach
@@ -200,7 +202,7 @@
                                     <th class="px-6 py-4 font-medium w-1/2">Pertanyaan (Cuplikan)</th>
                                     <th class="px-6 py-4 font-medium text-center">Jawabanmu</th>
                                     <th class="px-6 py-4 font-medium text-center">Kunci</th>
-                                    <th class="px-6 py-4 font-medium text-center">Status</th>
+                                    <th class="px-6 py-4 font-medium text-center">Status / Skor</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
@@ -216,33 +218,61 @@
                                         @php
                                             $jawaban = $sesi->jawaban->firstWhere('soal_id', $soal->id);
                                             $isCorrect = $jawaban && $jawaban->is_benar;
-                                            $userAns = $jawaban->jawaban_pilihan ?? $jawaban->jawaban_essay ?? '-';
+                                            
+                                            // Cek jawaban essay/writing
+                                            $userAns = $jawaban->jawaban_pilihan 
+                                                    ?? $jawaban->jawaban_essay 
+                                                    ?? $jawaban->jawaban_text 
+                                                    ?? '-';
+                                                    
+                                            $tipeSoal = $soal->tipe_soal ?? 'pilihan_ganda';
                                         @endphp
                                         <tr class="hover:bg-gray-50/50 transition">
                                             <td class="px-6 py-4 font-medium text-gray-900 text-center">
                                                 {{ $soal->nomor_urut }}
                                             </td>
                                             
-                                            {{-- [FIXED] Pake strip_tags biar tag HTML <p> ilang --}}
                                             <td class="px-6 py-4 text-gray-600 truncate max-w-xs" title="{{ strip_tags($soal->pertanyaan) }}">
                                                 {{ Str::limit(strip_tags($soal->pertanyaan), 60) }}
                                             </td>
 
-                                            <td class="px-6 py-4 text-center font-bold {{ $isCorrect ? 'text-green-600' : 'text-red-500' }}">
+                                            <td class="px-6 py-4 text-center font-bold text-gray-700">
                                                 {{ Str::limit(strip_tags($userAns), 20) }}
                                             </td>
+                                            
                                             <td class="px-6 py-4 text-center text-gray-500">
-                                                {{ $soal->jawaban_benar ?? 'Essay' }}
-                                            </td>
-                                            <td class="px-6 py-4 text-center">
-                                                @if($isCorrect)
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                        <i data-lucide="check" size="12"></i> Benar
-                                                    </span>
+                                                @if($tipeSoal == 'writing' || $tipeSoal == 'essay')
+                                                    <span class="text-xs italic text-gray-400">Manual Check</span>
                                                 @else
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                        <i data-lucide="x" size="12"></i> Salah
-                                                    </span>
+                                                    {{ $soal->jawaban_benar }}
+                                                @endif
+                                            </td>
+
+                                            <td class="px-6 py-4 text-center">
+                                                {{-- LOGIC STATUS BIAR GAK SALAH KAPRAH --}}
+                                                @if($tipeSoal == 'writing' || $tipeSoal == 'essay')
+                                                    @if($jawaban && $jawaban->is_reviewed_by_teacher)
+                                                        {{-- Kalau udah dinilai guru --}}
+                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                                                            ★ Skor: {{ $jawaban->skor }}
+                                                        </span>
+                                                    @else
+                                                        {{-- Kalau belum dinilai --}}
+                                                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                                            <i data-lucide="clock" size="12"></i> Menunggu
+                                                        </span>
+                                                    @endif
+                                                @else
+                                                    {{-- Logic Lama (Pilihan Ganda) --}}
+                                                    @if($isCorrect)
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <i data-lucide="check" size="12"></i> Benar
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <i data-lucide="x" size="12"></i> Salah
+                                                        </span>
+                                                    @endif
                                                 @endif
                                             </td>
                                         </tr>

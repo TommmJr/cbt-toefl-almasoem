@@ -251,10 +251,6 @@
 
                                                     {{-- Tombol Koreksi (Muncul hanya jika token pernah dipakai/siswa sedang/sudah ujian) --}}
                                                     @if($tokenSiswa->jumlah_terpakai > 0)
-                                                        <a href="{{ route('guru.penilaian.writing', [$ujian->id, $s->id]) }}" 
-                                                           class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-bold border border-blue-200 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition w-full justify-center">
-                                                            <i data-lucide="pen-tool" size="14"></i> Koreksi
-                                                        </a>
                                                     @endif
                                                 @endif
 

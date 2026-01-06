@@ -16,31 +16,12 @@ class Nilai extends Model
      * Nama tabel
      */
     protected $table = 'nilai';
-
-    /**
-     * Mass assignable attributes
-     */
-    protected $fillable = [
-        'sesi_ujian_id',
-        'siswa_id',
-        'ujian_id',
-        'skor_listening',
-        'skor_reading',
-        'skor_writing',
-        'skor_total',
-        'jumlah_benar',
-        'jumlah_salah',
-        'jumlah_kosong',
-        'is_lulus',
-        'predikat',
-        'durasi_pengerjaan_detik',
-        'tanggal_penilaian',
-    ];
+    protected $guarded = [];
 
     /**
      * Cast attributes
      */
-    protected function casts(): array
+   protected function casts(): array
     {
         return [
             'skor_listening' => 'decimal:2',
@@ -59,7 +40,7 @@ class Nilai extends Model
     /**
      * Relasi ke sesi ujian (many:1)
      */
-    public function sesiUjian(): BelongsTo
+   public function sesiUjian(): BelongsTo
     {
         return $this->belongsTo(SesiUjian::class);
     }
@@ -75,7 +56,7 @@ class Nilai extends Model
     /**
      * Relasi ke ujian (many:1)
      */
-    public function ujian(): BelongsTo
+   public function ujian(): BelongsTo
     {
         return $this->belongsTo(Ujian::class);
     }
@@ -123,7 +104,10 @@ class Nilai extends Model
     }
 
     /**
-     * : Hitung skor TOEFL total dari section scores
+     * : Hitung skor TOEFL total dari section scorespublic function sesiUjian(): BelongsTo
+    {
+        return $this->belongsTo(SesiUjian::class);
+    }
      * Formula konversi ke skala TOEFL ITP (simplified)
      */
     public function hitungSkorTotal(): void
