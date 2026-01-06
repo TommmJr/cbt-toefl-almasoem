@@ -12,8 +12,22 @@
     </style>
 </head>
 <body class="bg-gray-100 text-slate-800">
+{{-- DEBUG ALERT --}}
+@if(session('success'))
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative m-4" role="alert">
+        <strong class="font-bold">Berhasil!</strong>
+        <span class="block sm:inline">{{ session('success') }}</span>
+    </div>
+@endif
 
+@if(session('error'))
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative m-4" role="alert">
+        <strong class="font-bold">Error Bang!</strong>
+        <span class="block sm:inline">{{ session('error') }}</span>
+    </div>
+@endif
     <div class="flex min-h-screen">
+        {{-- Sidebar Component --}}
         <x-dashboard-sidebar role="guru" active="analisis" />
 
         <main class="flex-1 ml-20 p-8">
@@ -28,7 +42,15 @@
                 </div>
             </div>
 
-            {{-- Form Penilaian --}}
+            {{-- 
+                TRICK: Form Khusus buat Trigger AI 
+                (Ditaruh diluar form utama biar gak error nested form)
+            --}}
+            <form id="ai-trigger-form" action="{{ route('guru.analisis.ai_grade', [$ujian->id, $siswa->id]) }}" method="POST" class="hidden">
+                @csrf
+            </form>
+
+            {{-- Form Penilaian Utama (Manual) --}}
             <form action="{{ route('guru.analisis.simpan', [$ujian->id, $siswa->id]) }}" method="POST">
                 @csrf
                 
@@ -39,26 +61,41 @@
                             <div class="bg-blue-50 px-6 py-4 border-b border-blue-100 flex justify-between items-center">
                                 <h3 class="font-bold text-blue-800">Question #{{ $index + 1 }}</h3>
                                 <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded font-mono">
-                                    Max Score: 100
+                                    Max Score: {{ $jawaban->soal->max_score ?? 'N/A' }}
                                 </span>
                             </div>
 
                             <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                {{-- Kolom Soal --}}
+                                {{-- KIRI: Soal --}}
                                 <div class="space-y-4">
                                     <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">Pertanyaan:</div>
                                     <div class="prose max-w-none text-gray-800 bg-gray-50 p-4 rounded-lg border border-gray-100">
                                         {!! $jawaban->soal->pertanyaan !!}
                                     </div>
+                                    
+                                    @if($jawaban->soal->passage)
+                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide mt-4">Bacaan Pendukung:</div>
+                                        <div class="prose max-w-none text-gray-600 text-sm bg-gray-50 p-4 rounded-lg border border-gray-100 max-h-60 overflow-y-auto">
+                                            {!! $jawaban->soal->passage !!}
+                                        </div>
+                                    @endif
                                 </div>
 
-                               {{-- Kolom Jawaban Siswa & Nilai --}}
+                               {{-- KANAN: Jawaban Siswa & AI & Nilai --}}
                                 <div class="space-y-4">
-                                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">Jawaban Siswa:</div>
+                                    <div class="flex justify-between items-end">
+                                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">Jawaban Siswa:</div>
+                                        {{-- Tombol Trigger AI --}}
+                                        <button type="button" 
+                                            onclick="document.getElementById('ai-trigger-form').submit();"
+                                            class="text-xs bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md font-bold shadow transition flex items-center gap-1">
+                                            <i data-lucide="sparkles" size="14"></i> Minta AI Koreksi
+                                        </button>
+                                    </div>
+
+                                    {{-- Box Jawaban Siswa --}}
                                     <div class="prose max-w-none bg-yellow-50 p-4 rounded-lg border border-yellow-100 text-gray-800 min-h-[150px]">
-                                        
                                         @php
-                                            // LOGIC DETEKTIF (FIXED): Masukin 'jawaban_essay' paling depan!
                                             $isiJawaban = $jawaban->jawaban_essay 
                                                        ?? $jawaban->jawaban_text 
                                                        ?? $jawaban->jawaban 
@@ -67,27 +104,80 @@
                                         @endphp
 
                                         @if(!empty($isiJawaban))
-                                            {{-- Tampilkan jawaban --}}
                                             {!! nl2br(e($isiJawaban)) !!}
                                         @else
-                                            {{-- Debugging Text --}}
                                             <div class="flex flex-col gap-2">
                                                 <span class="text-red-400 italic flex items-center gap-2">
                                                     <i data-lucide="x-circle" size="16"></i> Siswa terdeteksi tidak menjawab.
-                                                </span>
-                                                <span class="text-[10px] text-gray-400 border-t pt-2 mt-2">
-                                                    Debug Data: JSON Raw <br>
-                                                    {{ json_encode($jawaban->toArray()) }}
                                                 </span>
                                             </div>
                                         @endif
                                     </div>
 
-                                    {{-- Input Score --}}
-                                    <div class="mt-4 pt-4 border-t border-gray-100">
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Berikan Nilai (0-100):</label>
+                                    {{-- ============================== --}}
+                                    {{-- 🔥 FITUR AI INTEGRATED HERE 🔥 --}}
+                                    {{-- ============================== --}}
+                                    @if($jawaban->ai_feedback)
+                                        @php
+                                            // Decode JSON aman
+                                            $aiData = is_string($jawaban->ai_feedback) ? json_decode($jawaban->ai_feedback, true) : $jawaban->ai_feedback;
+                                            $aiScore = $aiData['score'] ?? 0;
+                                        @endphp
+                                        
+                                        <div class="mt-4 bg-white border-2 border-purple-100 rounded-xl overflow-hidden shadow-sm relative">
+                                            <div class="bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-white flex justify-between items-center">
+                                                <span class="font-bold flex items-center gap-2 text-sm">
+                                                    <i data-lucide="bot" size="16"></i> Analisis AI (Gemini)
+                                                </span>
+                                                <span class="text-xl font-extrabold">{{ $aiScore }}<span class="text-xs font-normal text-purple-200">/60</span></span>
+                                            </div>
+                                            
+                                            <div class="p-4 text-sm text-gray-700 space-y-3">
+                                                {{-- Saran Revisi --}}
+                                                @if(isset($aiData['feedback']['suggested_revision']))
+                                                    <div>
+                                                        <strong class="text-purple-700 block text-xs mb-1">Saran Revisi Kalimat:</strong>
+                                                        <div class="bg-gray-50 p-2 rounded text-gray-600 italic border-l-4 border-purple-300 text-xs">
+                                                            "{{ $aiData['feedback']['suggested_revision'] }}"
+                                                        </div>
+                                                    </div>
+                                                @endif
+
+                                                <div class="grid grid-cols-2 gap-4">
+                                                    <div>
+                                                        <strong class="text-green-600 block text-xs mb-1">👍 Kelebihan:</strong>
+                                                        <ul class="list-disc pl-4 text-xs space-y-1 text-gray-600">
+                                                            @foreach(array_slice($aiData['feedback']['strengths'] ?? [], 0, 3) as $point)
+                                                                <li>{{ $point }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                    <div>
+                                                        <strong class="text-red-500 block text-xs mb-1">⚠️ Perbaikan:</strong>
+                                                        <ul class="list-disc pl-4 text-xs space-y-1 text-gray-600">
+                                                            @foreach(array_slice($aiData['feedback']['improvements'] ?? [], 0, 3) as $point)
+                                                                <li>{{ $point }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Tombol Copy Nilai --}}
+                                                <button type="button" 
+                                                    onclick="document.getElementById('score-input-{{ $jawaban->id }}').value = '{{ $aiScore }}'; this.innerText = 'Tersalin! ✅'; setTimeout(() => this.innerText = 'Gunakan Skor AI Ini', 2000);"
+                                                    class="w-full mt-2 bg-gray-100 hover:bg-purple-50 hover:text-purple-700 text-gray-600 py-2 rounded-lg text-xs font-bold border border-gray-300 transition dashed">
+                                                    Gunakan Skor AI Ini
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Input Score Manual --}}
+                                    <div class="mt-6 pt-4 border-t border-gray-100">
+                                        <label class="block text-sm font-bold text-gray-700 mb-2">Nilai Akhir (Guru):</label>
                                         <div class="flex items-center gap-4">
                                             <input type="number" 
+                                                   id="score-input-{{ $jawaban->id }}"
                                                    name="nilai[{{ $jawaban->soal_id }}]" 
                                                    value="{{ old('nilai.'.$jawaban->soal_id, $jawaban->teacher_score ?? $jawaban->skor ?? 0) }}" 
                                                    min="0" max="100" 
@@ -96,14 +186,17 @@
                                             
                                             @if($jawaban->is_reviewed_by_teacher)
                                                 <span class="text-xs text-green-600 flex items-center gap-1 font-medium bg-green-50 px-2 py-1 rounded">
-                                                    <i data-lucide="check-circle" size="12"></i> Sudah Dinilai
+                                                    <i data-lucide="check-circle" size="12"></i> Saved
                                                 </span>
                                             @else
                                                 <span class="text-xs text-orange-500 flex items-center gap-1 font-medium bg-orange-50 px-2 py-1 rounded">
-                                                    <i data-lucide="clock" size="12"></i> Menunggu Penilaian
+                                                    <i data-lucide="clock" size="12"></i> Belum Disimpan
                                                 </span>
                                             @endif
                                         </div>
+                                        <p class="text-[10px] text-gray-400 mt-1">
+                                            *Nilai ini yang akan masuk ke raport siswa. Anda bisa menggunakan rekomendasi AI atau menilai sendiri.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +205,7 @@
                         <div class="bg-white p-8 rounded-xl shadow text-center">
                             <img src="https://illustrations.popsy.co/gray/surr-list-is-empty.svg" alt="Empty" class="h-48 mx-auto mb-4 opacity-50">
                             <h3 class="text-xl font-bold text-gray-800">Tidak ada soal Writing</h3>
-                            <p class="text-gray-500">Ujian ini mungkin tidak memiliki section writing, atau data soal belum diset.</p>
+                            <p class="text-gray-500">Ujian ini mungkin tidak memiliki section writing.</p>
                         </div>
                     @endforelse
                 </div>
@@ -135,6 +228,8 @@
 
         </main>
     </div>
-    <script>lucide.createIcons();</script>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>

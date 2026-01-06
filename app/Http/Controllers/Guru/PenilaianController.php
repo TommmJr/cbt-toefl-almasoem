@@ -10,6 +10,7 @@ use App\Models\Jawaban;
 use App\Models\SesiUjian; 
 use App\Models\Nilai;
 use Illuminate\Support\Facades\Auth;
+use App\Services\GeminiWritingScorer;
 
 class PenilaianController extends Controller
 {
@@ -36,6 +37,51 @@ class PenilaianController extends Controller
         return view('guru.penilaian.show', compact('ujian', 'siswas'));
     }
 
+
+    /**
+     * FITUR BARU: Minta AI Koreksi Jawaban
+     */
+    public function generateAiScore(Request $request, $ujian_id, $siswa_id, GeminiWritingScorer $scorer)
+    {
+        // 1. Cari Sesi & Jawaban
+        $sesi = SesiUjian::where('ujian_id', $ujian_id)
+            ->where('siswa_id', $siswa_id)
+            ->firstOrFail();
+
+        // Ambil jawaban writing (asumsi tipe soal 'writing')
+        $jawaban = Jawaban::where('sesi_ujian_id', $sesi->id)
+            ->whereHas('soal.ujianSection', function($q) {
+                $q->where('tipe_section', 'writing');
+            })
+            ->with('soal')
+            ->first();
+
+        if (!$jawaban) {
+            return back()->with('error', 'Siswa belum mengisi jawaban writing!');
+        }
+
+        try {
+            // 2. Suruh AI Mikir
+            $result = $scorer->score([
+                'question'   => $jawaban->soal->pertanyaan,
+                'answer'     => strip_tags($jawaban->jawaban_essay ?? $jawaban->jawaban_text),
+                'min_words'  => $jawaban->soal->min_kata,
+                'max_words'  => $jawaban->soal->max_kata,
+            ]);
+
+            // 3. Simpan Hasil ke Database
+            $jawaban->update([
+                'ai_score'    => $result['score'],
+                'ai_feedback' => json_encode($result), // Simpan JSON lengkap
+            ]);
+
+            return back()->with('success', 'AI berhasil mengoreksi! Cek hasilnya di bawah.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal connect ke AI: ' . $e->getMessage());
+        }
+    }
+    
     /**
      * 3. Form Koreksi Writing 
      */

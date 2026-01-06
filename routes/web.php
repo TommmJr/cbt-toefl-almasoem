@@ -9,7 +9,7 @@ use App\Models\SesiUjian;
 use App\Models\Siswa;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Guru\PenilaianController;
-
+use Illuminate\Support\Facades\Http;
 /*
 |--------------------------------------------------------------------------
 | Debug Route (Cek Auth)
@@ -113,7 +113,6 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         ->name('siswa.index');
     
     // 7. MANAJEMEN TOKEN SISWA 
-    
     // Generate Token 
     Route::post('/ujian/token/generate', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'generateTokenSiswa'])
         ->name('ujian.generate_token_siswa');
@@ -122,18 +121,27 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
     Route::delete('/ujian/token/{id}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'hapusTokenSiswa'])
         ->name('ujian.hapus_token_siswa');
 
-   // 8. MANAJEMEN PENILAIAN & ANALISIS (Arsitektur Baru)
+   // 8. MANAJEMEN PENILAIAN & ANALISIS 
     Route::prefix('analisis')->name('analisis.')->group(function () {
-    // List Semua Ujian (Halaman Index)
-    Route::get('/', [PenilaianController::class, 'index'])->name('index');
-    
-    // List Siswa per Ujian (Halaman Show)
-    Route::get('/{ujian}', [PenilaianController::class, 'show'])->name('show');
-    
-    // Form Koreksi Writing (Logic Lama, Pindah Route)
-    Route::get('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'koreksiWriting'])->name('koreksi');
-    Route::post('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])->name('simpan');
-});
+        // List Semua Ujian (Halaman Index)
+        Route::get('/', [PenilaianController::class, 'index'])->name('index');
+        
+        // List Siswa per Ujian (Halaman Show)
+        Route::get('/{ujian}', [PenilaianController::class, 'show'])->name('show');
+        
+        // Form Koreksi Writing (Logic Lama)
+        Route::get('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'koreksiWriting'])->name('koreksi');
+        Route::post('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])->name('simpan');
+
+        // ==========================================
+        //  TAMBAHAN ROUTE AI GRADING WRITING
+        // ==========================================
+        Route::post('/{ujian}/koreksi/{siswa}/ai-grade', [PenilaianController::class, 'generateAiScore'])
+            ->name('ai_grade'); 
+    });
+
+
+
 });
 
 /*
@@ -192,4 +200,15 @@ Route::get('/debug-hantu', function () {
     }
 
     return $report;
+});
+
+// ROUTE DARURAT BUAT CEK MODEL AI
+Route::get('/cek-model-ai', function() {
+    $apiKey = config('services.gemini.api_key');
+    
+    // Kita tanya ke Google: "Woi, kunci gue ini boleh pake model apa aja?"
+    $response = Http::withOptions(['verify' => false]) // Bypass SSL biar gak error di local
+        ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
+    
+    return $response->json();
 });
