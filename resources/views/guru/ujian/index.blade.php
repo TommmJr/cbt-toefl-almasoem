@@ -65,9 +65,30 @@
                                         <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-0.5 rounded-full font-medium">Draft</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('guru.ujian.show', $item->id) }}" class="text-blue-600 hover:text-blue-900 font-medium mr-3">Kelola</a>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <a href="{{ route('guru.ujian.show', $item->id) }}"
+                                    class="text-blue-600 hover:text-blue-900 font-medium">
+                                        Kelola
+                                    </a>
+
+                                    @if($item->started_at === null)
+                                        <form action="{{ route('guru.ujian.start', $item->id) }}"
+                                            method="POST"
+                                            class="inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <button
+                                                class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold">
+                                                START
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-green-600 text-xs font-bold">
+                                            SUDAH DIMULAI
+                                        </span>
+                                    @endif
                                 </td>
+
                             </tr>
                         @empty
                             <tr>

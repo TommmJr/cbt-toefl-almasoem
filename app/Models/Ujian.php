@@ -20,6 +20,7 @@ class Ujian extends Model
      * Nama tabel
      */
     protected $table = 'ujian';
+    protected $guarded = [];
 
     /**
      * Mass assignable attributes
@@ -38,6 +39,7 @@ class Ujian extends Model
         'is_published',
         'tab_lock_enabled',
         'show_result_immediately',
+        'started_at',
     ];
 
     /**
@@ -177,6 +179,12 @@ public function tokens(): HasMany
 {
     return $this->hasMany(TokenUjian::class);
 }
+
+public function tokenUjian()
+    {
+        // Pastikan lu udah punya model TokenUjian ya
+        return $this->hasMany(TokenUjian::class, 'ujian_id');
+    }
 
 /**
  * Helper: Generate token untuk ujian ini

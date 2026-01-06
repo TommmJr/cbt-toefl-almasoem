@@ -5,10 +5,10 @@ use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboard;
 use App\Http\Controllers\Siswa\UjianController as SiswaUjianController;
-// Import Tambahan buat Debug
 use App\Models\SesiUjian;
 use App\Models\Siswa;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Guru\PenilaianController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,31 +78,61 @@ Route::middleware(['auth', 'role:siswa'])->prefix('siswa')->name('siswa.')->grou
 */
 Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(function () {
     
-    // ... route dashboard & ujian lainnya ...
+    // 1. Dashboard
+    Route::get('/dashboard', [App\Http\Controllers\Guru\DashboardController::class, 'index'])
+        ->name('dashboard');
 
+    // 2. Resource Ujian (CRUD Dasar: index, create, store, show, edit, update, destroy)
     Route::resource('ujian', App\Http\Controllers\Guru\ManajemenUjianController::class);
     
-    // Route buat Section
-    Route::post('/ujian/{id}/section', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'storeSection'])->name('ujian.section.store');
+    // 3. Section Routes (Menambah bagian Listening/Reading dll)
+    Route::post('/ujian/{id}/section', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'storeSection'])
+        ->name('ujian.section.store');
     
-    // Route buat Soal
-    Route::get('/section/{section}/soal/create', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'createSoal'])->name('ujian.soal.create');
-    Route::post('/section/{section}/soal', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'storeSoal'])->name('ujian.soal.store');
-
-    // Route edit Soal
-    Route::get('/soal/{soal}/edit', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'editSoal'])->name('ujian.soal.edit');
-    Route::put('/soal/{soal}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'updateSoal'])->name('ujian.soal.update');
+    // 4. Soal Routes (CRUD Soal dalam Section)
+    Route::get('/section/{section}/soal/create', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'createSoal'])
+        ->name('ujian.soal.create');
+    Route::post('/section/{section}/soal', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'storeSoal'])
+        ->name('ujian.soal.store');
     
-    // Route delete Soal
-    Route::delete('/soal/{id}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'destroySoal'])->name('ujian.soal.destroy');
+    Route::get('/soal/{soal}/edit', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'editSoal'])
+        ->name('ujian.soal.edit');
+    Route::put('/soal/{soal}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'updateSoal'])
+        ->name('ujian.soal.update');
+    Route::delete('/soal/{id}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'destroySoal'])
+        ->name('ujian.soal.destroy');
 
-    // Route publish Ujian
-    Route::put('/ujian/{id}/publish', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'publish'])->name('ujian.publish');
+    // 5. Fitur Ujian (Publish & Start)
+    Route::put('/ujian/{id}/publish', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'publish'])
+        ->name('ujian.publish');
+    Route::put('/ujian/{id}/start', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'start'])
+        ->name('ujian.start');
+    
+    // 6. Siswa Management
+    Route::get('/siswa', [App\Http\Controllers\Guru\SiswaController::class, 'index'])
+        ->name('siswa.index');
+    
+    // 7. MANAJEMEN TOKEN SISWA 
+    
+    // Generate Token 
+    Route::post('/ujian/token/generate', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'generateTokenSiswa'])
+        ->name('ujian.generate_token_siswa');
+
+    // Hapus/Reset Token (Pake DELETE by ID Token)
+    Route::delete('/ujian/token/{id}', [App\Http\Controllers\Guru\ManajemenUjianController::class, 'hapusTokenSiswa'])
+        ->name('ujian.hapus_token_siswa');
+
+    // 8. PENILAIAN UJIAN (Khusus untuk bagian Writing)
+    Route::get('/ujian/{ujian}/koreksi-writing/{siswa}', [PenilaianController::class, 'koreksiWriting'])
+        ->name('penilaian.writing'); 
+
+    Route::post('/ujian/{ujian}/koreksi-writing/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])
+        ->name('penilaian.store_writing'); 
 });
 
 /*
 |--------------------------------------------------------------------------
-| ROUTE DARURAT: DEBUG HANTU (Taruh di paling bawah)
+| ROUTE DARURAT
 |--------------------------------------------------------------------------
 */
 Route::get('/debug-hantu', function () {
@@ -126,13 +156,11 @@ Route::get('/debug-hantu', function () {
         $isLewat = $now->greaterThan($sesi->waktu_selesai);
         $statusCurrent = $sesi->status; // Ini Enum Object
 
-        // --- COBA PAKSA UPDATE DISINI ---
         $pesan = "Tidak ada perubahan";
         
         // Logic: Kalau waktu habis DAN statusnya BUKAN selesai -> EKSEKUSI
         if ($isLewat && $statusCurrent !== \App\Enums\StatusUjian::SELESAI) {
             try {
-                // Panggil fungsi sakti yang kita buat di Model
                 if (method_exists($sesi, 'hitungNilaiDanSelesai')) {
                     $sesi->hitungNilaiDanSelesai();
                     $pesan = "BERHASIL DIPAKSA SELESAI & HITUNG NILAI";
@@ -151,7 +179,7 @@ Route::get('/debug-hantu', function () {
             'waktu_sekarang_server' => $now->toDateTimeString(),
             'waktu_selesai_ujian' => $sesi->waktu_selesai ? $sesi->waktu_selesai->toDateTimeString() : 'NULL',
             'apakah_sudah_lewat' => $isLewat ? 'YA' : 'BELUM',
-            'status_awal' => $statusCurrent, // Enum akan otomatis jadi string di JSON response Laravel baru
+            'status_awal' => $statusCurrent, 
             'status_sesudah' => $sesi->fresh()->status, 
             'hasil_eksekusi' => $pesan
         ];

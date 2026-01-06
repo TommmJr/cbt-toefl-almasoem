@@ -171,20 +171,27 @@
                 {{-- SATU KOTAK BESAR UNTUK SEMUA --}}
                 <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-[500px]">
                     
-                    @if(isset($ujianAktif) && $ujianAktif->count() > 0)
+                    @php
+                        $semuaUjian = collect()
+                            ->merge($ujianAktif ?? [])
+                            ->merge($ujianAkanDatang ?? []);
+                    @endphp
+
+                    @if($semuaUjian->count() > 0)
+
                         {{-- KONDISI 1: ADA UJIAN --}}
                         <div class="mb-6 border-b border-gray-100 pb-4">
                             <h2 class="text-xl font-bold text-gray-800">Ujian Anda</h2>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($ujianAktif as $ujian)
+            @foreach($semuaUjian as $ujian)
                 @php
                     $sesiSiswa = \App\Models\SesiUjian::where('ujian_id', $ujian->id)
                         ->where('siswa_id', $user->siswa->id ?? null)
                         ->first();
 
-                    $isStarted = now() >= $ujian->waktu_mulai;
+                    $isStarted = $ujian->started_at !== null;
                     // Status Selesai: Bisa ngecek string atau value Enum
                     $isFinished = $sesiSiswa && ($sesiSiswa->status === \App\Enums\StatusUjian::SELESAI || $sesiSiswa->status == 'selesai');
                 @endphp
@@ -303,7 +310,7 @@
             </div>
         </div>
 
-        {{-- Script Chart.js (Pake CDN yang pasti-pasti aja) --}}
+        {{-- Script Chart.js --}}
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
         
         <script>

@@ -73,7 +73,6 @@ class Soal extends Model
 
     /* |==========================================================================
     |  ACCESSORS (Ambil Data: Database -> View)
-    |  Ini biar di View bisa panggil $soal->pilihan_a, $soal->bobot, dll
     |========================================================================== */
 
     public function getPilihanAAttribute() { return $this->opsi_jawaban['a'] ?? null; }

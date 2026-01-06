@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Models\UjianSection; 
 use App\Models\Soal;
+use Carbon\Carbon;
+use App\Models\TokenUjian;
+use App\Models\Siswa;
+
 
 class ManajemenUjianController extends Controller
 {
@@ -57,15 +61,21 @@ class ManajemenUjianController extends Controller
     }
 
     // 4. Halaman Detail Ujian
-    public function show($id)
+   public function show($id)
     {
-        $ujian = Ujian::with(['sections.soal'])->findOrFail($id);
+        // Update di sini: tambahin 'tokenUjian' di dalam with()
+        $ujian = Ujian::with(['sections.soal', 'tokenUjian'])->findOrFail($id);
 
         if ($ujian->guru_id !== Auth::user()->guru->id) {
-            abort(403, 'Akses Ditolak: Ini bukan ujian punya lu bang!');
+            abort(403);
         }
 
-        return view('guru.ujian.show', compact('ujian'));
+        $siswa = Siswa::with('user')->orderBy('nama_lengkap', 'asc')->get();
+
+        return view('guru.ujian.show', [
+            'ujian' => $ujian,
+            'siswa' => $siswa,
+        ]);
     }
 
     // 5. Simpan Section Baru
@@ -153,29 +163,25 @@ class ManajemenUjianController extends Controller
 
         // 4. SIMPAN KE DATABASE
         Soal::create([
-            'ujian_section_id' => $sectionId,
-            'tipe_soal' => $tipeSection,
-            'nomor_urut' => $urutan,
-            'pertanyaan' => $request->pertanyaan,
-            
-            // Kolom Khusus
-            'audio_path' => $audioPath,
-            'passage' => $request->passage, // Untuk Reading
-            
-            // Pilihan Ganda (Null jika writing)
-            'pilihan_a' => $tipeSection === 'writing' ? null : $request->pilihan_a,
-            'pilihan_b' => $tipeSection === 'writing' ? null : $request->pilihan_b,
-            'pilihan_c' => $tipeSection === 'writing' ? null : $request->pilihan_c,
-            'pilihan_d' => $tipeSection === 'writing' ? null : $request->pilihan_d,
-            'pilihan_e' => $tipeSection === 'writing' ? null : $request->pilihan_e,
-            'kunci_jawaban' => $tipeSection === 'writing' ? null : $request->kunci_jawaban,
-            
-            // Writing Settings
-            'min_kata' => $request->min_kata,
-            'max_kata' => $request->max_kata,
-            
-            'bobot_nilai' => $request->bobot ?? 1,
-        ]);
+        'ujian_section_id' => $sectionId,
+        'tipe_soal' => $tipeSection,
+        'nomor_urut' => $urutan,
+        'pertanyaan' => $request->pertanyaan,
+        'passage' => $request->passage,
+        'audio_path' => $audioPath,
+        'opsi_jawaban' => $tipeSection === 'writing' ? null : json_encode([
+            'A' => $request->pilihan_a,
+            'B' => $request->pilihan_b,
+            'C' => $request->pilihan_c,
+            'D' => $request->pilihan_d,
+            'E' => $request->pilihan_e,
+        ]),
+        'jawaban_benar' => $tipeSection === 'writing' ? null : strtoupper($request->kunci_jawaban),
+        'bobot' => $request->bobot ?? 1,
+        'min_kata' => $request->min_kata,
+        'max_kata' => $request->max_kata,
+    ]);
+
 
         return redirect()->route('guru.ujian.show', $section->ujian_id)
             ->with('success', 'Soal berhasil ditambahkan!');
@@ -204,7 +210,29 @@ class ManajemenUjianController extends Controller
         return back()->with('success', "Ujian berhasil $status!");
     }
 
-    // 9. Tampilkan Form Edit Soal
+
+    //9. Mulai Ujian
+    public function start($id)
+        {
+            $ujian = Ujian::findOrFail($id);
+
+            if ($ujian->guru_id !== Auth::user()->guru->id) {
+                abort(403);
+            }
+
+            if ($ujian->started_at !== null) {
+                return back()->with('error', 'Ujian sudah dimulai sebelumnya.');
+            }
+
+            $ujian->update([
+                'started_at' => now(),
+            ]);
+
+            return back()->with('success', 'Ujian berhasil DIMULAI.');
+        }
+
+
+    // 10 Tampilkan Form Edit Soal
     public function editSoal($id)
     {
         $soal = Soal::with('ujianSection.ujian')->findOrFail($id);
@@ -217,41 +245,56 @@ class ManajemenUjianController extends Controller
         return view('guru.ujian.soal.edit', compact('soal'));
     }
 
-    // 10. Proses Update Soal
+    
+
+    // 10 proses Update Soal
     public function updateSoal(Request $request, $id)
-    {
-        $request->validate([
-            'pertanyaan' => 'required',
-            'pilihan_a' => 'required',
-            'pilihan_b' => 'required',
-            'pilihan_c' => 'required',
-            'pilihan_d' => 'required',
-            'kunci_jawaban' => 'required|in:a,b,c,d,e',
-            'bobot' => 'required|integer|min:1',
-        ]);
+        {
+            $soal = Soal::findOrFail($id);
 
-        $soal = Soal::findOrFail($id);
+            if ($soal->ujianSection->ujian->guru_id !== Auth::user()->guru->id) {
+                abort(403);
+            }
 
-        // Security Check
-        if ($soal->ujianSection->ujian->guru_id !== Auth::user()->guru->id) {
-            abort(403);
+            $rules = [
+                'pertanyaan' => 'required',
+                'bobot' => 'required|integer|min:1',
+            ];
+
+            if ($soal->tipe_soal !== 'writing') {
+                $rules += [
+                    'pilihan_a' => 'required',
+                    'pilihan_b' => 'required',
+                    'pilihan_c' => 'required',
+                    'pilihan_d' => 'required',
+                    'kunci_jawaban' => 'required|in:a,b,c,d,e',
+                ];
+            }
+
+            $request->validate($rules);
+
+            $soal->update([
+                'pertanyaan' => $request->pertanyaan,
+                'opsi_jawaban' => $soal->tipe_soal === 'writing' ? null : json_encode([
+                    'A' => $request->pilihan_a,
+                    'B' => $request->pilihan_b,
+                    'C' => $request->pilihan_c,
+                    'D' => $request->pilihan_d,
+                    'E' => $request->pilihan_e,
+                ]),
+                'jawaban_benar' => $soal->tipe_soal === 'writing'
+                    ? null
+                    : strtoupper($request->kunci_jawaban),
+                'bobot' => $request->bobot,
+                'min_kata' => $request->min_kata,
+                'max_kata' => $request->max_kata,
+            ]);
+
+            return redirect()
+                ->route('guru.ujian.show', $soal->ujianSection->ujian_id)
+                ->with('success', 'Soal berhasil diperbarui!');
         }
 
-        // Update data (Magic Mutators di Model Soal akan handle JSON-nya)
-        $soal->update([
-            'pertanyaan' => $request->pertanyaan,
-            'pilihan_a' => $request->pilihan_a,
-            'pilihan_b' => $request->pilihan_b,
-            'pilihan_c' => $request->pilihan_c,
-            'pilihan_d' => $request->pilihan_d,
-            'pilihan_e' => $request->pilihan_e,
-            'kunci_jawaban' => $request->kunci_jawaban,
-            'bobot' => $request->bobot,
-        ]);
-
-        return redirect()->route('guru.ujian.show', $soal->ujianSection->ujian_id)
-            ->with('success', 'Soal berhasil diperbarui!');
-    }
 
     // 11. Hapus Soal
     public function destroySoal($id)
@@ -266,5 +309,47 @@ class ManajemenUjianController extends Controller
         $soal->delete();
 
         return back()->with('success', 'Soal berhasil dihapus bersih!');
+    }
+
+    // Generate Token Ujian Untuk masing-masing Siswa
+    public function generateTokenSiswa(Request $request)
+    {
+        $request->validate([
+            'ujian_id' => 'required|exists:ujian,id',
+            'siswa_id' => 'required|exists:siswa,id',
+        ]);
+
+        // Cek double data
+        $exists = TokenUjian::where('ujian_id', $request->ujian_id)
+                    ->where('siswa_id', $request->siswa_id)
+                    ->first();
+
+        if ($exists) {
+            return back()->with('error', 'Siswa ini sudah punya token!');
+        }
+
+        $tokenRaw = strtoupper(Str::random(6));
+
+        TokenUjian::create([
+            'kode_token'      => $tokenRaw,
+            'ujian_id'        => $request->ujian_id,
+            'siswa_id'        => $request->siswa_id,
+            'berlaku_dari'    => now(),
+            'berlaku_sampai'  => now()->addMinutes(120), // Model: berlaku_sampai
+            'kuota_pemakaian' => 1,                      // Model: kuota_pemakaian
+            'jumlah_terpakai' => 0,                      // Default 0
+            'is_active'       => true,                   // Default Aktif
+            'dibuat_oleh'     => auth()->id(),           // Opsional: ID Guru yg buat
+        ]);
+
+        return back()->with('success', 'Token berhasil dibuat: ' . $tokenRaw);
+    }
+
+    // Reset Token
+    public function hapusTokenSiswa($id)
+    {
+        $token = TokenUjian::findOrFail($id);
+        $token->delete();
+        return back()->with('success', 'Token berhasil direset/dihapus.');
     }
 }

@@ -15,9 +15,6 @@ class SiswaSeeder extends Seeder
         // Format: [Label (buat email dummy), Nama Lengkap, NIS (User Login)]
         // Password default: '123'
         $timDev = [
-            ['frontend', 'Si Paling Frontend', 'DEV001'],
-            ['backend',  'Si Paling Backend',  'DEV002'],
-            ['testing',  'Tukang Testing',     'DEV003'],
             ['siswa',    'Siswa Contoh',       '2025001'],
         ];
 

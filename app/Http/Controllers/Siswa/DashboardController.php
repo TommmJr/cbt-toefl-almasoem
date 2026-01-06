@@ -94,8 +94,12 @@ class DashboardController extends Controller
 
         // 7. Data Ujian Aktif (Untuk Tab Test)
         $ujianAktif = Ujian::published()
-            ->aktif() 
-            ->orderBy('waktu_selesai', 'asc')
+            ->where('waktu_mulai', '<=', now())
+            ->where('waktu_selesai', '>=', now())
+            ->get();
+
+        $ujianAkanDatang = Ujian::published()
+            ->where('waktu_mulai', '>', now())
             ->get();
 
         // ==========================================================
@@ -128,8 +132,10 @@ class DashboardController extends Controller
             'writingAvg'     => $writingAvg,
             'recentNilais'   => $recentNilais,
             'sesiTerakhir'   => $sesiTerakhir,
-            'ujianAktif'     => $ujianAktif, 
-            'chartData'      => $chartData, 
+            'ujianAktif'     => $ujianAktif,
+            'ujianAkanDatang'=> $ujianAkanDatang,
+            'chartData'      => $chartData,
         ]);
+
     }
 }

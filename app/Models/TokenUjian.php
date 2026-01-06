@@ -22,6 +22,7 @@ class TokenUjian extends Model
 
     protected $fillable = [
         'ujian_id',
+        'siswa_id',
         'kode_token',
         'kuota_pemakaian',
         'jumlah_terpakai',
@@ -57,6 +58,11 @@ class TokenUjian extends Model
         return $this->belongsToMany(Siswa::class, 'token_ujian_usage')
             ->withPivot(['sesi_ujian_id', 'ip_address', 'digunakan_pada'])
             ->withTimestamps();
+    }
+
+    public function siswa(): BelongsTo
+    {
+        return $this->belongsTo(Siswa::class);
     }
 
     public function usageLogs(): HasMany
@@ -96,6 +102,10 @@ class TokenUjian extends Model
 
     private function validasiUntukSesiBaru(Siswa $siswa): void
     {
+        if ($this->siswa_id !== null && $this->siswa_id !== $siswa->id) {
+        throw new \Exception('Token ini bukan milik akun Anda');
+        }
+
         if (! $this->is_active) {
             throw new \Exception('Token sudah dinonaktifkan');
         }
