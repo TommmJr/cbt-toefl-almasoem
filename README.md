@@ -47,19 +47,6 @@ Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi
 - **AI Integration**: Google Gemini API via Laravel HTTP Client
 - **Authentication**: Laravel Session & Multi-Role Middleware (`admin`, `guru`, `siswa`)
 
----
-
-##  Struktur Standar TOEFL ITP
-
-| Section | Tipe | Jumlah Soal | Durasi Standar | Rentang Skor |
-| :--- | :--- | :---: | :---: | :---: |
-| **Section 1** | Listening Comprehension | 50 Soal | 35-40 Menit | 31 – 68 |
-| **Section 2** | Structure & Written Expression | 40 Soal | 25 Menit | 31 – 68 |
-| **Section 3** | Reading Comprehension | 50 Soal | 55 Menit | 31 – 67 |
-| **Section 4** | Essay / Writing *(Opsional)* | 1 Soal | 30 Menit | AI / Guru |
-| **Total Skor** | **Skor Konversi TOEFL ITP** | - | - | **310 – 677** |
-
----
 
 ##  Panduan Instalasi Lokal
 
