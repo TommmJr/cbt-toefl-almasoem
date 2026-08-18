@@ -35,9 +35,12 @@ class AuthController extends Controller
 
         $login = $request->username;
 
-        // 1. Cari user
+        // 1. Cari user (bisa lewat username, email, atau NIS siswa)
         $user = User::where('username', $login)
             ->orWhere('email', $login)
+            ->orWhereHas('siswa', function ($query) use ($login) {
+                $query->where('nis', $login);
+            })
             ->first();
 
         if (! $user) {
