@@ -206,7 +206,6 @@ Route::get('/debug-hantu', function () {
 Route::get('/cek-model-ai', function() {
     $apiKey = config('services.gemini.api_key');
     
-    // Kita tanya ke Google: "Woi, kunci gue ini boleh pake model apa aja?"
     $response = Http::withOptions(['verify' => false]) // Bypass SSL biar gak error di local
         ->get("https://generativelanguage.googleapis.com/v1beta/models?key={$apiKey}");
     

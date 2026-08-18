@@ -31,7 +31,6 @@ return new class extends Migration
             $table->index('nis');
             $table->index('kelas');
             $table->index(['kelas', 'nama_lengkap']);
-            $table->fullText(['nama_lengkap', 'nis']);
         });
     }
 

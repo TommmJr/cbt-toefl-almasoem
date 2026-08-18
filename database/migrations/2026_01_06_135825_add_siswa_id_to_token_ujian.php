@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('token_ujian', function (Blueprint $table) {
+        Schema::table('token_ujians', function (Blueprint $table) {
             // relasi ke siswa
             $table->foreignId('siswa_id')
                 ->nullable()
@@ -23,7 +23,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('token_ujian', function (Blueprint $table) {
+        Schema::table('token_ujians', function (Blueprint $table) {
             $table->dropForeign(['siswa_id']);
             $table->dropColumn('siswa_id');
         });

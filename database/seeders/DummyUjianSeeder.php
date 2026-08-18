@@ -51,7 +51,7 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Listening
         Soal::firstOrCreate(
-            ['ujian_section_id' => $secListening->id, 'nomor_urut' => 1],
+            ['ujian_id' => $ujian->id, 'nomor_urut' => 1],
             [
                 'tipe_soal' => 'listening',
                 'pertanyaan' => '<p>Listen to the conversation. What does the man imply?</p>',
@@ -63,7 +63,7 @@ class DummyUjianSeeder extends Seeder
                     'D' => 'He is sleeping early.'
                 ]),
                 'jawaban_benar' => 'A',
-                'bobot' => 10
+                'bobot_nilai' => 10
             ]
         );
 
@@ -81,9 +81,9 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Structure
         Soal::firstOrCreate(
-            ['ujian_section_id' => $secStructure->id, 'nomor_urut' => 1],
+            ['ujian_id' => $ujian->id, 'nomor_urut' => 2],
             [
-                'tipe_soal' => 'pilihan_ganda', // Struktur itu PG, bukan Essay
+                'tipe_soal' => 'reading', // Changed from 'pilihan_ganda'
                 'pertanyaan' => '<p>The sun ______ in the east and sets in the west.</p>',
                 'opsi_jawaban' => json_encode([
                     'A' => 'rise',
@@ -92,7 +92,7 @@ class DummyUjianSeeder extends Seeder
                     'D' => 'rising'
                 ]),
                 'jawaban_benar' => 'B',
-                'bobot' => 10
+                'bobot_nilai' => 10
             ]
         );
 
@@ -110,9 +110,9 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Reading
         Soal::firstOrCreate(
-            ['ujian_section_id' => $secReading->id, 'nomor_urut' => 1],
+            ['ujian_id' => $ujian->id, 'nomor_urut' => 3],
             [
-                'tipe_soal' => 'pilihan_ganda',
+                'tipe_soal' => 'reading',
                 'passage' => '<div class="trix-content"><h3>The History of Internet</h3><p>The history of the Internet has its origin in...</p></div>',
                 'pertanyaan' => '<p>What is the main topic of the passage?</p>',
                 'opsi_jawaban' => json_encode([
@@ -122,7 +122,7 @@ class DummyUjianSeeder extends Seeder
                     'D' => 'Future AI'
                 ]),
                 'jawaban_benar' => 'B',
-                'bobot' => 10
+                'bobot_nilai' => 10
             ]
         );
 
@@ -140,13 +140,13 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Essay
         Soal::firstOrCreate(
-            ['ujian_section_id' => $secWriting->id, 'nomor_urut' => 1],
+            ['ujian_id' => $ujian->id, 'nomor_urut' => 4],
             [
                 'tipe_soal' => 'writing', // Ini baru trigger Textarea
                 'pertanyaan' => '<p>Do you agree or disagree with the following statement? Technology has made children less creative. Use specific reasons and examples to support your opinion.</p>',
                 'opsi_jawaban' => null,
                 'jawaban_benar' => null,
-                'bobot' => 30,
+                'bobot_nilai' => 30,
                 'min_kata' => 250
             ]
         );

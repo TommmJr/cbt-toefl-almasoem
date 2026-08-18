@@ -26,7 +26,6 @@ return new class extends Migration
 
             // Index
             $table->index('nip');
-            $table->fullText('nama_lengkap');
         });
     }
 
