@@ -37,9 +37,7 @@ class DummyUjianSeeder extends Seeder
             ]
         );
 
-        // ==========================================
         // SECTION 1: LISTENING (Audio)
-        // ==========================================
         $secListening = UjianSection::updateOrCreate(
             ['ujian_id' => $ujian->id, 'tipe_section' => 'listening'],
             [
@@ -51,7 +49,7 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Listening
         Soal::firstOrCreate(
-            ['ujian_id' => $ujian->id, 'nomor_urut' => 1],
+            ['ujian_section_id' => $secListening->id, 'nomor_urut' => 1],
             [
                 'tipe_soal' => 'listening',
                 'pertanyaan' => '<p>Listen to the conversation. What does the man imply?</p>',
@@ -67,9 +65,7 @@ class DummyUjianSeeder extends Seeder
             ]
         );
 
-        // ==========================================
         // SECTION 2: STRUCTURE (Grammar - Pilihan Ganda)
-        // ==========================================
         $secStructure = UjianSection::updateOrCreate(
             ['ujian_id' => $ujian->id, 'tipe_section' => 'structure'],
             [
@@ -81,9 +77,9 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Structure
         Soal::firstOrCreate(
-            ['ujian_id' => $ujian->id, 'nomor_urut' => 2],
+            ['ujian_section_id' => $secStructure->id, 'nomor_urut' => 1],
             [
-                'tipe_soal' => 'reading', // Changed from 'pilihan_ganda'
+                'tipe_soal' => 'structure',
                 'pertanyaan' => '<p>The sun ______ in the east and sets in the west.</p>',
                 'opsi_jawaban' => json_encode([
                     'A' => 'rise',
@@ -96,9 +92,7 @@ class DummyUjianSeeder extends Seeder
             ]
         );
 
-        // ==========================================
         // SECTION 3: READING (Bacaan)
-        // ==========================================
         $secReading = UjianSection::updateOrCreate(
             ['ujian_id' => $ujian->id, 'tipe_section' => 'reading'],
             [
@@ -110,7 +104,7 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Reading
         Soal::firstOrCreate(
-            ['ujian_id' => $ujian->id, 'nomor_urut' => 3],
+            ['ujian_section_id' => $secReading->id, 'nomor_urut' => 1],
             [
                 'tipe_soal' => 'reading',
                 'passage' => '<div class="trix-content"><h3>The History of Internet</h3><p>The history of the Internet has its origin in...</p></div>',
@@ -126,9 +120,7 @@ class DummyUjianSeeder extends Seeder
             ]
         );
 
-        // ==========================================
         // SECTION 4: WRITING (Essay)
-        // ==========================================
         $secWriting = UjianSection::updateOrCreate(
             ['ujian_id' => $ujian->id, 'tipe_section' => 'writing'],
             [
@@ -140,7 +132,7 @@ class DummyUjianSeeder extends Seeder
 
         // Soal Essay
         Soal::firstOrCreate(
-            ['ujian_id' => $ujian->id, 'nomor_urut' => 4],
+            ['ujian_section_id' => $secWriting->id, 'nomor_urut' => 1],
             [
                 'tipe_soal' => 'writing', // Ini baru trigger Textarea
                 'pertanyaan' => '<p>Do you agree or disagree with the following statement? Technology has made children less creative. Use specific reasons and examples to support your opinion.</p>',

@@ -30,10 +30,10 @@ class Soal extends Model
         ];
     }
 
-    /* |==========================================================================
+    /* |======
     |  MUTATORS (Simpan Data: Controller -> Database)
     |  Ini "jembatan" biar inputan 'pilihan_a' masuk ke JSON 'opsi_jawaban'
-    |========================================================================== */
+    |====== */
 
     // 1. Tangkap 'pilihan_a' -> Masukkan ke array opsi_jawaban['a']
     public function setPilihanAAttribute($value) { $this->setOpsi('a', $value); }
@@ -71,9 +71,9 @@ class Soal extends Model
         $this->attributes['opsi_jawaban'] = json_encode($opsi);
     }
 
-    /* |==========================================================================
+    /* |======
     |  ACCESSORS (Ambil Data: Database -> View)
-    |========================================================================== */
+    |====== */
 
     public function getPilihanAAttribute() { return $this->opsi_jawaban['a'] ?? null; }
     public function getPilihanBAttribute() { return $this->opsi_jawaban['b'] ?? null; }
@@ -93,9 +93,9 @@ class Soal extends Model
         return $this->attributes['bobot_nilai'] ?? null;
     }
 
-    /* |==========================================================================
+    /* |======
     |  RELASI & HELPER
-    |========================================================================== */
+    |====== */
 
     public function jawaban(): HasMany
     {

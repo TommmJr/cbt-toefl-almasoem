@@ -11,25 +11,36 @@ class SiswaSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. DAFTAR AKUN TIM
-        // Format: [Label (buat email dummy), Nama Lengkap, NIS (User Login)]
-        // Password default: '123'
+        // 1. Hubungkan user 'siswa01' (dari UserSeeder) ke tabel Siswa
+        $userSiswa01 = User::where('username', 'siswa01')->first();
+        if ($userSiswa01) {
+            Siswa::firstOrCreate(
+                ['user_id' => $userSiswa01->id],
+                [
+                    'nis'           => '2025001',
+                    'nama_lengkap'  => 'Siswa 01',
+                    'kelas'         => 'XII RPL 1',
+                    'jenis_kelamin' => 'L',
+                ]
+            );
+        }
+
+        // 2. DAFTAR AKUN TIM / SISWA TAMBAHAN
         $timDev = [
-            ['siswa',    'Siswa Contoh',       '2025001'],
+            ['siswa',    'Siswa Contoh',       '2025002'],
         ];
 
         foreach ($timDev as $dev) {
             $nisLogin = $dev[2]; // Ambil NIS buat jadi Username
 
-            // Cek biar gak duplikat (cek berdasarkan username/NIS)
+            // Cek biar gak duplikat
             if (User::where('username', $nisLogin)->exists()) {
                 continue;
             }
 
             // Bikin User Login (Username = NIS)
             $user = User::create([
-                'username' => $nisLogin, // LOGIN PAKE NIS
-                // FIX: Gunakan NIS sebagai email biar unik dan gak bentrok duplicate entry
+                'username' => $nisLogin,
                 'email'    => strtolower($nisLogin) . '@cbt.com', 
                 'password' => Hash::make('123'),
                 'role'     => 'siswa',

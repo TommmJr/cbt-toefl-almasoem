@@ -118,9 +118,15 @@
                                             <div class="flex justify-between items-start mb-2">
                                                 <div class="flex items-center gap-2">
                                                     <span class="bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded text-xs">No. {{ $soal->nomor_urut ?? ($index + 1) }}</span>
-                                                    <span class="bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded text-xs border border-gray-300">
-                                                        Kunci: {{ strtoupper($soal->kunci_jawaban) }}
-                                                    </span>
+                                                    @if($soal->kunci_jawaban)
+                                                        <span class="bg-gray-100 text-gray-600 font-bold px-2 py-0.5 rounded text-xs border border-gray-300">
+                                                            Kunci: {{ strtoupper((string)$soal->kunci_jawaban) }}
+                                                        </span>
+                                                    @else
+                                                        <span class="bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded text-xs border border-amber-300">
+                                                            Essay (Writing)
+                                                        </span>
+                                                    @endif
                                                     <span class="text-xs text-gray-400">Bobot: {{ $soal->bobot }}</span>
                                                 </div>
                                                 
@@ -137,12 +143,18 @@
                                                 {!! $soal->pertanyaan !!}
                                             </div>
                                             
-                                            <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 pl-1 text-xs text-gray-500">
-                                                <div class="{{ $soal->kunci_jawaban == 'a' ? 'text-green-600 font-bold' : '' }}">A. {{ $soal->pilihan_a }}</div>
-                                                <div class="{{ $soal->kunci_jawaban == 'b' ? 'text-green-600 font-bold' : '' }}">B. {{ $soal->pilihan_b }}</div>
-                                                <div class="{{ $soal->kunci_jawaban == 'c' ? 'text-green-600 font-bold' : '' }}">C. {{ $soal->pilihan_c }}</div>
-                                                <div class="{{ $soal->kunci_jawaban == 'd' ? 'text-green-600 font-bold' : '' }}">D. {{ $soal->pilihan_d }}</div>
-                                            </div>
+                                            @if($soal->pilihan_a || $soal->pilihan_b || $soal->pilihan_c || $soal->pilihan_d)
+                                                <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-3 pl-1 text-xs text-gray-500">
+                                                    <div class="{{ strtolower((string)$soal->kunci_jawaban) === 'a' ? 'text-green-600 font-bold' : '' }}">A. {{ $soal->pilihan_a }}</div>
+                                                    <div class="{{ strtolower((string)$soal->kunci_jawaban) === 'b' ? 'text-green-600 font-bold' : '' }}">B. {{ $soal->pilihan_b }}</div>
+                                                    <div class="{{ strtolower((string)$soal->kunci_jawaban) === 'c' ? 'text-green-600 font-bold' : '' }}">C. {{ $soal->pilihan_c }}</div>
+                                                    <div class="{{ strtolower((string)$soal->kunci_jawaban) === 'd' ? 'text-green-600 font-bold' : '' }}">D. {{ $soal->pilihan_d }}</div>
+                                                </div>
+                                            @elseif($soal->min_kata)
+                                                <div class="mt-2 pl-1 text-xs text-gray-500 italic">
+                                                    Min. Kata: {{ $soal->min_kata }} @if($soal->max_kata) | Max. Kata: {{ $soal->max_kata }} @endif
+                                                </div>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>

@@ -211,13 +211,13 @@
     <script>
         lucide.createIcons();
 
-        /* ================= STATE ================= */
+        /*  STATE  */
         let sisaDetik = {{ $sisaDetik }};
         const timerDisplay = document.getElementById('timer-display');
         let debounceTimer = {};
         let sudahSubmit = false;
 
-        /* ================= FORMAT TIME ================= */
+        /*  FORMAT TIME  */
         function formatTime(seconds) {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
@@ -225,7 +225,7 @@
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
 
-        /* ================= AUTOSAVE JAWABAN ================= */
+        /*  AUTOSAVE JAWABAN  */
         // Gw update parameternya biar nerima tipe (pilihan/essay)
         function simpanJawaban(soalId, jawaban, tipe = 'pilihan') {
             const payload = {
@@ -255,7 +255,7 @@
             }).catch(err => console.error('Gagal save', err));
         }
 
-        /* ================= HANDLER ESSAY (WORD COUNT + DEBOUNCE) ================= */
+        /*  HANDLER ESSAY (WORD COUNT + DEBOUNCE)  */
         function handleEssayInput(textarea, soalId) {
             const text = textarea.value;
             
@@ -279,7 +279,7 @@
             });
         });
 
-        /* ================= SUBMIT SECTION ================= */
+        /*  SUBMIT SECTION  */
         window.autoSubmitSection = function () {
             if (sudahSubmit) return;
             sudahSubmit = true;
@@ -320,7 +320,7 @@
             });
         };
 
-        /* ================= TIMER LOGIC ================= */
+        /*  TIMER LOGIC  */
         if (timerDisplay) {
             timerDisplay.innerText = formatTime(sisaDetik);
 

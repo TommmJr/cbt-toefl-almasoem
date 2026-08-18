@@ -36,7 +36,7 @@ class SesiUjian extends Model
         'section_mulai_at' => 'datetime',
     ];
 
-    /* ================= RELATIONS ================= */
+    /*  RELATIONS  */
 
     public function siswa(): BelongsTo
     {
@@ -53,7 +53,7 @@ class SesiUjian extends Model
         return $this->hasMany(Jawaban::class);
     }
 
-    /* ================= ACCESS ================= */
+    /*  ACCESS  */
 
     public function pastikanMilikSiswa(int $siswaId): void
     {
@@ -76,7 +76,7 @@ class SesiUjian extends Model
         }
     }
 
-    /* ================= SECTION FLOW ================= */
+    /*  SECTION FLOW  */
 
     public function sectionAktif()
     {
@@ -101,7 +101,7 @@ class SesiUjian extends Model
         return (int) $this->current_section_index >= $total;
     }
 
-    /* ================= TIMER ================= */
+    /*  TIMER  */
 
     public function sectionEndTime(): Carbon
     {
@@ -137,7 +137,7 @@ class SesiUjian extends Model
     }
 
 
-    /* ================= HITUNG NILAI & SELESAI ================= */
+    /*  HITUNG NILAI & SELESAI  */
 
     public function hitungNilaiDanSelesai()
     {

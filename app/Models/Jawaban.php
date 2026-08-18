@@ -36,7 +36,7 @@ class Jawaban extends Model
         ];
     }
 
-    /* ================= RELATIONS ================= */
+    /*  RELATIONS  */
 
     public function sesiUjian(): BelongsTo
     {
@@ -48,7 +48,7 @@ class Jawaban extends Model
         return $this->belongsTo(Soal::class);
     }
 
-    /* ================= SCOPES ================= */
+    /*  SCOPES  */
 
     public function scopeBenar($query)
     {
@@ -67,7 +67,7 @@ class Jawaban extends Model
             ->where('is_reviewed_by_teacher', false);
     }
 
-    /* ================= CORE SCORING ================= */
+    /*  CORE SCORING  */
 
     /**
      * Auto nilai pilihan ganda
@@ -98,7 +98,7 @@ class Jawaban extends Model
         ]);
     }
 
-    /* ================= AI & MANUAL SCORING ================= */
+    /*  AI & MANUAL SCORING  */
 
     public function setSkorAI(float $score, array $feedback): void
     {
@@ -119,7 +119,7 @@ class Jawaban extends Model
         ]);
     }
 
-    /* ================= ESSAY UTIL ================= */
+    /*  ESSAY UTIL  */
 
     public function hitungJumlahKata(): void
     {

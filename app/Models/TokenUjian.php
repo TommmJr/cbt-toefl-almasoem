@@ -46,7 +46,7 @@ class TokenUjian extends Model
         ];
     }
 
-    /* ================= RELATIONS ================= */
+    /*  RELATIONS  */
 
     public function ujian(): BelongsTo
     {
@@ -70,7 +70,7 @@ class TokenUjian extends Model
         return $this->hasMany(TokenUjianUsage::class);
     }
 
-    /* ================= SCOPE ================= */
+    /*  SCOPE  */
 
     public function scopeAktifDanValid($query)
     {
@@ -81,7 +81,7 @@ class TokenUjian extends Model
             ->whereRaw('COALESCE(jumlah_terpakai, 0) < kuota_pemakaian');
     }
 
-    /* ================= HELPER (TAMBAHAN BARU) ================= */
+    /*  HELPER (TAMBAHAN BARU)  */
 
     /**
      * Helper: Generate token unik 6 digit
@@ -98,7 +98,12 @@ class TokenUjian extends Model
         return $token;
     }
 
-    /* ================= VALIDASI TOKEN (HANYA UNTUK SESI BARU) ================= */
+    /*  VALIDASI TOKEN (HANYA UNTUK SESI BARU)  */
+
+    public function validasiToken(Siswa $siswa): void
+    {
+        $this->validasiUntukSesiBaru($siswa);
+    }
 
     private function validasiUntukSesiBaru(Siswa $siswa): void
     {
@@ -134,7 +139,7 @@ class TokenUjian extends Model
         }
     }
 
-    /* ================= CORE ================= */
+    /*  CORE  */
 
     /**
      * IDPOTENT

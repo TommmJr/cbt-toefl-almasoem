@@ -28,9 +28,9 @@ class DashboardController extends Controller
         $siswa = Siswa::where('user_id', $user->id)->first();
         $siswaId = $siswa?->id;
 
-        // ==========================================================
+        // =======
         // 🛡️ SATPAM UJIAN BASI (AUTO-FIX LOGIC)
-        // ==========================================================
+        // =======
         if ($siswaId) {
             // 1. AMBIL DATA DULU (Bagian ini tadi ketinggalan bang!)
             $sesiLewatWaktu = SesiUjian::where('siswa_id', $siswaId)
@@ -52,7 +52,7 @@ class DashboardController extends Controller
                 }
             }
         }
-        // ==========================================================
+        // =======
 
         // 2. Page Param (Aman Buat Sidebar / Tab)
         $page = $request->query('page', 'home');
@@ -102,9 +102,9 @@ class DashboardController extends Controller
             ->where('waktu_mulai', '>', now())
             ->get();
 
-        // ==========================================================
+        // =======
         //  7.5. PREPARASI DATA UNTUK CHART (COLUMNS VERIFIED)
-        // ==========================================================
+        // =======
         $chartData = [
             'labels' => [],
             'scores' => []

@@ -133,9 +133,7 @@ Route::middleware(['auth', 'role:guru'])->prefix('guru')->name('guru.')->group(f
         Route::get('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'koreksiWriting'])->name('koreksi');
         Route::post('/{ujian}/koreksi/{siswa}', [PenilaianController::class, 'simpanNilaiWriting'])->name('simpan');
 
-        // ==========================================
         //  TAMBAHAN ROUTE AI GRADING WRITING
-        // ==========================================
         Route::post('/{ujian}/koreksi/{siswa}/ai-grade', [PenilaianController::class, 'generateAiScore'])
             ->name('ai_grade'); 
     });

@@ -23,7 +23,7 @@ return new class extends Migration
         // Status Pengerjaan (Log Siswa)
         $table->dateTime('waktu_mulai')->nullable();
         $table->dateTime('waktu_selesai')->nullable();
-        $table->enum('status', ['ongoing', 'completed', 'stopped'])->default('ongoing');
+        $table->enum('status', ['belum_mulai', 'sedang_mengerjakan', 'selesai', 'diskualifikasi'])->default('belum_mulai');
         
         // Security & Teknis
         $table->string('ip_address')->nullable();

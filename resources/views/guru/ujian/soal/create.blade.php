@@ -36,9 +36,9 @@
                 <form action="{{ route('guru.ujian.soal.store', $section->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     {{-- 1. KHUSUS LISTENING (Upload Audio) --}}
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     @if($section->tipe_section === 'listening' || (is_object($section->tipe_section) && $section->tipe_section->value === 'listening'))
                         <div class="mb-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
                             <label class="block text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
@@ -55,9 +55,9 @@
                         </div>
                     @endif
 
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     {{-- 2. KHUSUS READING (Teks Bacaan) --}}
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     @if($section->tipe_section === 'reading' || (is_object($section->tipe_section) && $section->tipe_section->value === 'reading'))
                         <div class="mb-6">
                             <label class="block text-sm font-bold text-green-800 mb-2 flex items-center gap-2">
@@ -69,9 +69,9 @@
                         </div>
                     @endif
 
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     {{-- 3. PERTANYAAN (Semua Tipe Butuh Ini) --}}
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     <div class="mb-6">
                         <label class="block text-sm font-bold text-gray-900 mb-2">Pertanyaan / Instruksi Soal</label>
                         <input id="pertanyaan" type="hidden" name="pertanyaan" value="{{ old('pertanyaan') }}">
@@ -79,9 +79,9 @@
                         @error('pertanyaan') <p class="text-red-600 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     {{-- 4. PILIHAN GANDA (Hanya Listening, Reading, Structure) --}}
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     @if($section->tipe_section !== 'writing' && (!is_object($section->tipe_section) || $section->tipe_section->value !== 'writing'))
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             @foreach(['a', 'b', 'c', 'd'] as $opt)
@@ -113,9 +113,9 @@
                             </div>
                         </div>
 
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     {{-- 5. KHUSUS WRITING (Essay Settings) --}}
-                    {{-- ========================================== --}}
+                    {{-- ======== --}}
                     @else
                         <div class="bg-yellow-50 p-6 rounded-xl border border-yellow-200 mb-8">
                             <h3 class="font-bold text-yellow-800 mb-4 flex items-center gap-2">
