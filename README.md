@@ -1,12 +1,12 @@
-# 🎓 CBT TOEFL Al Ma'soem
+# CBT TOEFL Al Ma'soem
 
 Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi dan penilaian tes **TOEFL ITP** di Yayasan Al Ma'soem Bandung. Sistem ini dirancang untuk mendukung ribuan peserta ujian secara bersamaan dengan alur pengerjaan berstandar resmi, timer server-side, sistem token dinamis, dan penilaian otomatis menggunakan Google Gemini AI untuk bagian Writing/Essay.
 
 ---
 
-## 🌟 Fitur Utama
+## Fitur Utama
 
-### 1. 👨‍🏫 Panel Guru / Pengajar
+### 1. Panel Guru / Pengajar
 - **Manajemen Ujian & Section**: Buat, edit, atur durasi, dan kelola sekuens bagian ujian (Listening, Structure, Reading, Writing).
 - **Manajemen Soal Lengkap**:
   - Dukungan audio player untuk section *Listening Comprehension*.
@@ -21,7 +21,7 @@ Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi
   - **AI-Assisted Grading**: Penilaian essay otomatis dengan feedback komprehensif menggunakan Google Gemini AI.
   - Manual override nilai dan catatan guru.
 
-### 2. 👨‍🎓 Panel Siswa (Peserta Ujian)
+### 2. Panel Siswa
 - **Login NIS / Username**: Akses mudah menggunakan NIS atau username terdaftar.
 - **Akses Berbasis Token**: Validasi token sebelum memulai sesi ujian.
 - **Antarmuka CBT Modern**:
@@ -32,14 +32,14 @@ Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi
   - Auto-submit otomatis jika waktu pengerjaan habis.
 - **Dashboard & Riwayat Nilai**: Menampilkan grafik skor, riwayat simulasi, dan detail sertifikat/hasil prediksi TOEFL.
 
-### 3. 🛡️ Keamanan & Integritas Ujian
+### 3. Keamanan & Integritas Ujian
 - Deteksi perpindahan tab browser (*Tab Switch Prevention*).
 - Validasi IP address dan browser *User-Agent* per sesi ujian.
 - Idempotensi sesi pengerjaan (mencegah duplikasi sesi aktif).
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Backend**: [Laravel 11](https://laravel.com/) (PHP 8.2+)
 - **Database**: SQLite (Development) / MySQL (Production)
@@ -49,7 +49,7 @@ Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi
 
 ---
 
-## 📋 Struktur Standar TOEFL ITP
+##  Struktur Standar TOEFL ITP
 
 | Section | Tipe | Jumlah Soal | Durasi Standar | Rentang Skor |
 | :--- | :--- | :---: | :---: | :---: |
@@ -61,7 +61,7 @@ Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi
 
 ---
 
-## 🚀 Panduan Instalasi Lokal
+##  Panduan Instalasi Lokal
 
 ### 1. Prasyarat
 - PHP >= 8.2 (dengan ekstensi `pdo`, `sqlite3`, `curl`, `mbstring`, `fileinfo`)
@@ -125,7 +125,7 @@ Aplikasi dapat diakses melalui browser di: `http://localhost:8000`
 
 ---
 
-## 🔑 Akun Bawaan (Default Seeder)
+##  Akun Bawaan (Default Seeder)
 
 | Role | Username / NIS | Email | Password |
 | :--- | :--- | :--- | :--- |
@@ -136,7 +136,7 @@ Aplikasi dapat diakses melalui browser di: `http://localhost:8000`
 
 ---
 
-## 📁 Struktur Direktori Penting
+##  Struktur Direktori Penting
 
 ```plaintext
 app/
@@ -161,7 +161,7 @@ resources/views/
 
 ---
 
-## 🧪 Menjalankan Unit Testing
+##  Menjalankan Unit Testing
 
 Untuk memvalidasi integritas logika token, perhitungan nilai, dan model:
 ```bash
@@ -170,7 +170,7 @@ php artisan test
 
 ---
 
-## 📄 Lisensi
+##  Lisensi
 
 Proyek ini dikembangkan untuk kebutuhan internal Yayasan Al Ma'soem Bandung.
 Lisensi kode di bawah lisensi [MIT](LICENSE).
