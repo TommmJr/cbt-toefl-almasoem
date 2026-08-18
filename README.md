@@ -1,66 +1,176 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎓 CBT TOEFL Al Ma'soem
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem Ujian Berbasis Komputer (**Computer-Based Testing / CBT**) untuk simulasi dan penilaian tes **TOEFL ITP** di Yayasan Al Ma'soem Bandung. Sistem ini dirancang untuk mendukung ribuan peserta ujian secara bersamaan dengan alur pengerjaan berstandar resmi, timer server-side, sistem token dinamis, dan penilaian otomatis menggunakan Google Gemini AI untuk bagian Writing/Essay.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🌟 Fitur Utama
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 1. 👨‍🏫 Panel Guru / Pengajar
+- **Manajemen Ujian & Section**: Buat, edit, atur durasi, dan kelola sekuens bagian ujian (Listening, Structure, Reading, Writing).
+- **Manajemen Soal Lengkap**:
+  - Dukungan audio player untuk section *Listening Comprehension*.
+  - Dukungan teks bacaan (*passage*) kaya format untuk *Reading*.
+  - Opsi jawaban pilihan ganda (A–E) dan soal bertipe *Essay/Writing*.
+  - Kustomisasi bobot nilai, batas minimal kata essay, dan kunci jawaban.
+- **Manajemen Token Siswa**:
+  - Generate token unik 6 digit (alphanumeric) per siswa untuk keamanan akses ujian.
+  - Fitur reset token dan pembatasan kuota pemakaian.
+- **Analisis Nilai & Koreksi**:
+  - Penilaian otomatis TOEFL ITP (konversi skor standar 310–677).
+  - **AI-Assisted Grading**: Penilaian essay otomatis dengan feedback komprehensif menggunakan Google Gemini AI.
+  - Manual override nilai dan catatan guru.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 2. 👨‍🎓 Panel Siswa (Peserta Ujian)
+- **Login NIS / Username**: Akses mudah menggunakan NIS atau username terdaftar.
+- **Akses Berbasis Token**: Validasi token sebelum memulai sesi ujian.
+- **Antarmuka CBT Modern**:
+  - Timer *server-side* anti-refresh (waktu tetap berjalan saat halaman dimuat ulang).
+  - Autosave jawaban secara *real-time* saat memilih opsi atau mengetik essay.
+  - Navigasi soal dinamis (indikator sudah dijawab / belum).
+  - Alur section terkunci (siswa menyelesaikan per section secara berurutan).
+  - Auto-submit otomatis jika waktu pengerjaan habis.
+- **Dashboard & Riwayat Nilai**: Menampilkan grafik skor, riwayat simulasi, dan detail sertifikat/hasil prediksi TOEFL.
 
-## Learning Laravel
+### 3. 🛡️ Keamanan & Integritas Ujian
+- Deteksi perpindahan tab browser (*Tab Switch Prevention*).
+- Validasi IP address dan browser *User-Agent* per sesi ujian.
+- Idempotensi sesi pengerjaan (mencegah duplikasi sesi aktif).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## 🛠️ Tech Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Backend**: [Laravel 11](https://laravel.com/) (PHP 8.2+)
+- **Database**: SQLite (Development) / MySQL (Production)
+- **Frontend**: Blade Templates, [TailwindCSS](https://tailwindcss.com/), [Livewire](https://livewire.laravel.com/), [Lucide Icons](https://lucide.dev/), [Chart.js](https://www.chartjs.org/)
+- **AI Integration**: Google Gemini API via Laravel HTTP Client
+- **Authentication**: Laravel Session & Multi-Role Middleware (`admin`, `guru`, `siswa`)
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 📋 Struktur Standar TOEFL ITP
 
-### Premium Partners
+| Section | Tipe | Jumlah Soal | Durasi Standar | Rentang Skor |
+| :--- | :--- | :---: | :---: | :---: |
+| **Section 1** | Listening Comprehension | 50 Soal | 35-40 Menit | 31 – 68 |
+| **Section 2** | Structure & Written Expression | 40 Soal | 25 Menit | 31 – 68 |
+| **Section 3** | Reading Comprehension | 50 Soal | 55 Menit | 31 – 67 |
+| **Section 4** | Essay / Writing *(Opsional)* | 1 Soal | 30 Menit | AI / Guru |
+| **Total Skor** | **Skor Konversi TOEFL ITP** | - | - | **310 – 677** |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+---
 
-## Contributing
+## 🚀 Panduan Instalasi Lokal
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Prasyarat
+- PHP >= 8.2 (dengan ekstensi `pdo`, `sqlite3`, `curl`, `mbstring`, `fileinfo`)
+- [Composer](https://getcomposer.org/)
+- [Node.js](https://nodejs.org/) & NPM
 
-## Code of Conduct
+### 2. Clone Repositori
+```bash
+git clone https://github.com/TommmJr/cbt-toefl-almasoem.git
+cd cbt-toefl-almasoem
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Install Dependensi
+```bash
+composer install
+npm install
+```
 
-## Security Vulnerabilities
+### 4. Konfigurasi Environment (`.env`)
+Salin file konfigurasi environment:
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Sesuaikan konfigurasi database dan API key di dalam file `.env`:
+```ini
+DB_CONNECTION=sqlite
+# Atau jika menggunakan MySQL:
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=cbt_toefl_almasoem
+# DB_USERNAME=root
+# DB_PASSWORD=
 
-## License
+# Konfigurasi AI Grading (Google Gemini)
+GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Jika menggunakan SQLite, pastikan file database tersedia:
+```bash
+touch database/database.sqlite
+```
+
+### 5. Migrasi & Seeder Database
+Jalankan migrasi dan isi data dummy:
+```bash
+php artisan migrate:fresh --seed
+php artisan storage:link
+```
+
+### 6. Jalankan Aplikasi
+Build aset frontend dan jalankan server lokal Laravel:
+```bash
+npm run build
+php artisan serve
+```
+
+Aplikasi dapat diakses melalui browser di: `http://localhost:8000`
+
+---
+
+## 🔑 Akun Bawaan (Default Seeder)
+
+| Role | Username / NIS | Email | Password |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin` | `admin@cbt.com` | `123` |
+| **Guru** | `gurubahasa` | `guru@cbt.com` | `321` |
+| **Siswa 1** | `siswa01` *(NIS: `2025001`)* | `siswa@cbt.com` | `111` |
+| **Siswa 2** | `2025002` *(NIS: `2025002`)* | `2025002@cbt.com` | `123` |
+
+---
+
+## 📁 Struktur Direktori Penting
+
+```plaintext
+app/
+├── Actions/Ujian/           # Business logic ujian (HitungSkor, AutoSubmit)
+├── Enums/                   # StatusUjian, TipeSoal, RolePengguna
+├── Http/Controllers/
+│   ├── Admin/               # Controller modul admin
+│   ├── Guru/                # Manajemen ujian, soal, token, penilaian
+│   └── Siswa/               # CBT engine, submit jawaban, dashboard
+├── Models/                  # Ujian, UjianSection, Soal, SesiUjian, TokenUjian, dll.
+└── Services/                # GeminiWritingScorer, TokenUjianService
+config/
+└── toefl.php                # Konfigurasi standar durasi & tabel skor TOEFL
+database/
+├── migrations/              # Skema tabel database
+└── seeders/                 # Data inisialisasi & dummy TOEFL
+resources/views/
+├── auth/                    # Halaman login multi-role
+├── guru/                    # Tampilan dashboard & manajemen guru
+└── siswa/                   # Tampilan CBT siswa & halaman hasil
+```
+
+---
+
+## 🧪 Menjalankan Unit Testing
+
+Untuk memvalidasi integritas logika token, perhitungan nilai, dan model:
+```bash
+php artisan test
+```
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dikembangkan untuk kebutuhan internal Yayasan Al Ma'soem Bandung.
+Lisensi kode di bawah lisensi [MIT](LICENSE).
